@@ -41,9 +41,13 @@ olids-patient-explorer/
 
 ### Tables Used
 
-- `DATA_LAKE.OLIDS.observation`: Patient observations
+- `MODELLING.DBT_STAGING.STG_OLIDS_OBSERVATION`: Patient observations (deduplicated and tested)
+- `MODELLING.DBT_STAGING.STG_OLIDS_PERSON`: Person records (deduplicated and tested)
+- `MODELLING.DBT_STAGING.STG_OLIDS_MEDICATION_ORDER`: Medication orders (deduplicated and tested)
 - `REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS`: Current patient demographics
 - `REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS_HISTORICAL`: Historical demographic changes (SCD-2)
+
+The staging tables mirror the source data but have data quality tests and deduplication applied.
 
 ## Deployment
 
@@ -75,7 +79,7 @@ Database connection and configuration settings are managed in `config.py`. The a
 - **Role**: `ENGINEER`
 - **Warehouse**: `WH_NCL_ENGINEERING_XS`
 - **Schemas**:
-  - `DATA_LAKE.OLIDS` for clinical data
+  - `MODELLING.DBT_STAGING` for staging clinical data
   - `REPORTING.OLIDS_PERSON_DEMOGRAPHICS` for demographics
 
 ## Privacy Considerations
