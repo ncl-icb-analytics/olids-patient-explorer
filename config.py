@@ -115,6 +115,11 @@ CUSTOM_CSS = """
         margin: 40px auto;
     }
 
+    /* Reduce spacing before search form */
+    .search-container p {
+        margin-bottom: 0.5rem;
+    }
+
     /* Hide form border, padding, and margin */
     [data-testid="stForm"] {
         border: 0px;

@@ -14,7 +14,6 @@ def render_search():
     st.title("OLIDS Patient Record Explorer")
 
     st.markdown("### Patient Search")
-    st.markdown("Search for a patient by entering their **person_id** or **sk_patient_id**")
 
     # Initialize session state for search results
     if "search_results" not in st.session_state:
@@ -22,6 +21,7 @@ def render_search():
 
     # Search container
     st.markdown('<div class="search-container">', unsafe_allow_html=True)
+    st.markdown("Search for a patient by entering their **person_id** or **sk_patient_id**")
 
     # Use a form to enable ENTER key submission
     with st.form(key="search_form", clear_on_submit=False):
