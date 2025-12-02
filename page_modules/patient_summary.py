@@ -3,7 +3,7 @@ Patient summary page - landing page when viewing a patient record
 """
 
 import streamlit as st
-from services.patient_service import get_patient_demographics, get_patient_registration_history
+from services.patient_service import get_patient_demographics, get_patient_registration_history, get_patient_ltc_summary
 from services.record_service import get_observation_summary, get_medication_summary
 from utils.helpers import render_status_badge, format_date, format_boolean, safe_str
 
@@ -29,21 +29,23 @@ def render_patient_summary():
         st.session_state.search_results = None
         st.rerun()
 
-    # Load patient demographics
-    demographics = get_patient_demographics(person_id)
+    # Load patient data with spinner
+    with st.spinner("Loading patient summary..."):
+        # Load patient demographics
+        demographics = get_patient_demographics(person_id)
 
-    if demographics.empty:
-        st.error("Failed to load patient demographics")
-        return
+        if demographics.empty:
+            st.error("Failed to load patient demographics")
+            return
 
-    patient = demographics.iloc[0]
+        patient = demographics.iloc[0]
+
+        # Get observation and medication summaries
+        obs_summary = get_observation_summary(person_id)
+        med_summary = get_medication_summary(person_id)
 
     # Render patient header
     render_patient_header(patient)
-
-    # Get observation and medication summaries
-    obs_summary = get_observation_summary(person_id)
-    med_summary = get_medication_summary(person_id)
 
     # Render summary metrics
     render_summary_metrics(obs_summary, med_summary, patient)
@@ -79,6 +81,11 @@ def render_patient_summary():
 
     with tab4:
         render_language_info(patient)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Long-term conditions summary
+    render_ltc_summary(person_id)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -307,3 +314,40 @@ def render_registration_history(person_id):
 
                 if idx < len(history) - 1:
                     st.markdown("---")
+
+
+def render_ltc_summary(person_id):
+    """
+    Render long-term conditions summary section.
+
+    Args:
+        person_id: Patient identifier
+    """
+    ltc_data = get_patient_ltc_summary(person_id)
+
+    if ltc_data.empty:
+        return
+
+    st.markdown("### 🏥 Long-Term Conditions")
+
+    # Group by clinical domain
+    domains = ltc_data['CLINICAL_DOMAIN'].unique()
+
+    for domain in sorted(domains):
+        domain_conditions = ltc_data[ltc_data['CLINICAL_DOMAIN'] == domain]
+
+        st.markdown(f"**{domain}**")
+
+        # Display conditions as badges
+        badges_html = ""
+        for _, condition in domain_conditions.iterrows():
+            qof_class = "condition-qof" if condition['IS_QOF'] else "condition-other"
+            qof_label = " ⭐ QOF" if condition['IS_QOF'] else ""
+            earliest = format_date(condition['EARLIEST_DIAGNOSIS_DATE'])
+            latest = format_date(condition['LATEST_DIAGNOSIS_DATE'])
+            date_info = f"Dx: {earliest}" if earliest == latest else f"Dx: {earliest} - {latest}"
+
+            badges_html += f'<span class="condition-badge {qof_class}">{condition["CONDITION_NAME"]}{qof_label}<br><small>{date_info}</small></span>'
+
+        st.markdown(badges_html, unsafe_allow_html=True)
+        st.markdown("")

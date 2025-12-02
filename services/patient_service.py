@@ -4,7 +4,7 @@ Patient search and demographics service
 
 import streamlit as st
 import pandas as pd
-from config import TABLE_DIM_PERSON, TABLE_DIM_PERSON_HISTORICAL
+from config import TABLE_DIM_PERSON, TABLE_DIM_PERSON_HISTORICAL, TABLE_LTC_SUMMARY
 from database import get_connection
 
 
@@ -131,4 +131,41 @@ def get_patient_registration_history(person_id):
         return result
     except Exception as e:
         st.warning(f"Could not load registration history: {str(e)}")
+        return pd.DataFrame()
+
+def get_patient_ltc_summary(person_id):
+    """
+    Get long-term conditions summary for a patient.
+
+    Args:
+        person_id: Patient identifier
+
+    Returns:
+        DataFrame with LTC conditions
+    """
+    conn = get_connection()
+
+    query = f"""
+    SELECT
+        condition_code,
+        condition_name,
+        clinical_domain,
+        is_on_register,
+        is_qof,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
+    FROM {TABLE_LTC_SUMMARY}
+    WHERE person_id = '{person_id}'
+        AND is_on_register = TRUE
+    ORDER BY
+        is_qof DESC,
+        clinical_domain,
+        condition_name
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        return result
+    except Exception as e:
+        st.warning(f"Could not load LTC summary: {str(e)}")
         return pd.DataFrame()

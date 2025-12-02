@@ -5,6 +5,7 @@ Configuration settings for OLIDS Patient Record Explorer
 # Database configuration
 DB_STAGING = "MODELLING.DBT_STAGING"
 DB_DEMOGRAPHICS = "REPORTING.OLIDS_PERSON_DEMOGRAPHICS"
+DB_DISEASE_REGISTERS = "REPORTING.OLIDS_DISEASE_REGISTERS"
 
 # Table names
 TABLE_OBSERVATION = f"{DB_STAGING}.STG_OLIDS_OBSERVATION"
@@ -14,6 +15,7 @@ TABLE_MEDICATION_STATEMENT = f"{DB_STAGING}.STG_OLIDS_MEDICATION_STATEMENT"
 TABLE_PRACTITIONER = f"{DB_STAGING}.STG_OLIDS_PRACTITIONER"
 TABLE_DIM_PERSON = f"{DB_DEMOGRAPHICS}.DIM_PERSON_DEMOGRAPHICS"
 TABLE_DIM_PERSON_HISTORICAL = f"{DB_DEMOGRAPHICS}.DIM_PERSON_DEMOGRAPHICS_HISTORICAL"
+TABLE_LTC_SUMMARY = f"{DB_DISEASE_REGISTERS}.FCT_PERSON_LTC_SUMMARY"
 
 # Snowflake configuration
 ROLE = "ENGINEER"
@@ -117,6 +119,27 @@ CUSTOM_CSS = """
         border: 1px solid #dee2e6;
         padding: 16px;
         border-radius: 8px;
+    }
+    /* Condition badges */
+    .condition-badge {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 4px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .condition-qof {
+        background-color: #cfe2ff;
+        color: #084298;
+        border: 1px solid #9ec5fe;
+    }
+
+    .condition-other {
+        background-color: #f8f9fa;
+        color: #495057;
+        border: 1px solid #dee2e6;
     }
 </style>
 """
