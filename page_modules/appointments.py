@@ -66,16 +66,17 @@ def render_appointments():
         future_df = display_df[display_df["IS_FUTURE"] == True].copy()
         past_df = display_df[display_df["IS_FUTURE"] == False].copy()
         
-        # Show future appointments section if any exist
+        # Always show future appointments section
+        st.markdown("### 📅 Upcoming Appointments")
         if not future_df.empty:
-            st.markdown("### 📅 Upcoming Appointments")
             st.markdown(f"**{len(future_df)} upcoming appointment(s)**")
-            
             render_appointment_table(future_df, show_charts=False)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("---")
-            st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.info("No future appointments booked")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
         
         # Past appointments section
         if not past_df.empty:
@@ -188,9 +189,16 @@ def render_appointment_table(df, show_charts=True):
     table_df.columns = ["Date & Time", "Status", "Slot Category", "Contact Mode", "Duration", "Practitioner"]
     
     # Display table
-    st.dataframe(
-        table_df,
-        use_container_width=True,
-        hide_index=True,
-        height=600 if len(df) > 10 else None
-    )
+    if len(df) > 10:
+        st.dataframe(
+            table_df,
+            use_container_width=True,
+            hide_index=True,
+            height=600
+        )
+    else:
+        st.dataframe(
+            table_df,
+            use_container_width=True,
+            hide_index=True
+        )

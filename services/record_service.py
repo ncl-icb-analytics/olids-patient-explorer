@@ -355,9 +355,9 @@ def get_patient_appointments(person_id, date_from=None, date_to=None, include_fu
     SELECT
         a.start_date,
         a.type,
-        COALESCE(status_concept.code, a.appointment_status_concept_id) as appointment_status,
+        COALESCE(status_concept.display, a.appointment_status_concept_id) as appointment_status,
         a.national_slot_category_name,
-        COALESCE(contact_concept.code, a.contact_mode_concept_id) as contact_mode,
+        COALESCE(contact_concept.display, a.contact_mode_concept_id) as contact_mode,
         a.planned_duration,
         a.actual_duration,
         a.patient_wait,
