@@ -5,7 +5,7 @@ Patient records service for observations and medications
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, MAX_OBSERVATIONS
+from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, TABLE_MEDICATION_STATEMENT, MAX_OBSERVATIONS
 from database import get_connection
 
 
@@ -196,8 +196,16 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
         m.dose,
         m.quantity_value,
         m.quantity_unit,
+        m.duration_days,
+        m.estimated_cost,
+        m.issue_method_description,
+        ms.bnf_reference,
+        ms.issue_method as statement_issue_method,
+        ms.is_active as statement_is_active,
         m.id
     FROM {TABLE_MEDICATION_ORDER} m
+    LEFT JOIN {TABLE_MEDICATION_STATEMENT} ms
+        ON m.medication_statement_id = ms.id
     WHERE {where_sql}
     ORDER BY m.clinical_effective_date DESC
     LIMIT {MAX_OBSERVATIONS}

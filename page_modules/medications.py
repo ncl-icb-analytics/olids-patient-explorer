@@ -70,6 +70,14 @@ def render_medications():
         display_df = medications.copy()
         display_df['CLINICAL_EFFECTIVE_DATE'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
 
+        # Format prescription type - prefer issue_method_description, fallback to statement_issue_method
+        display_df['TYPE'] = display_df.apply(
+            lambda row: safe_str(row['ISSUE_METHOD_DESCRIPTION'])
+            if row['ISSUE_METHOD_DESCRIPTION'] and row['ISSUE_METHOD_DESCRIPTION'] != 'N/A'
+            else safe_str(row['STATEMENT_ISSUE_METHOD']),
+            axis=1
+        )
+
         # Format dose and quantity
         display_df['DOSE_INFO'] = display_df['DOSE'].apply(safe_str)
         display_df['QUANTITY_INFO'] = display_df.apply(
@@ -78,15 +86,24 @@ def render_medications():
             axis=1
         )
 
+        # Format duration if available
+        display_df['DURATION_INFO'] = display_df.apply(
+            lambda row: f"{int(row['DURATION_DAYS'])} days"
+            if row['DURATION_DAYS'] and str(row['DURATION_DAYS']) != 'nan' else "",
+            axis=1
+        )
+
         # Select and rename columns for display
         display_df = display_df[[
             'CLINICAL_EFFECTIVE_DATE',
-            'MAPPED_CONCEPT_CODE',
+            'TYPE',
             'MAPPED_CONCEPT_DISPLAY',
             'DOSE_INFO',
-            'QUANTITY_INFO'
+            'QUANTITY_INFO',
+            'DURATION_INFO',
+            'BNF_REFERENCE'
         ]]
-        display_df.columns = ['Date', 'SNOMED Code', 'Description', 'Dose', 'Quantity']
+        display_df.columns = ['Date', 'Type', 'Medication', 'Dose', 'Quantity', 'Duration', 'BNF']
 
         # Display table
         st.dataframe(

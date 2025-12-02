@@ -4,7 +4,7 @@ Patient summary page - landing page when viewing a patient record
 
 import streamlit as st
 from services.patient_service import get_patient_demographics, get_patient_registration_history
-from services.record_service import get_observation_summary
+from services.record_service import get_observation_summary, get_medication_summary
 from utils.helpers import render_status_badge, format_date, format_boolean, safe_str
 
 
@@ -41,11 +41,12 @@ def render_patient_summary():
     # Render patient header
     render_patient_header(patient)
 
-    # Get observation summary
-    summary = get_observation_summary(person_id)
+    # Get observation and medication summaries
+    obs_summary = get_observation_summary(person_id)
+    med_summary = get_medication_summary(person_id)
 
     # Render summary metrics
-    render_summary_metrics(summary, patient)
+    render_summary_metrics(obs_summary, med_summary, patient)
 
     # Navigation buttons to different views
     st.markdown("---")
@@ -110,32 +111,42 @@ def render_patient_header(patient):
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-def render_summary_metrics(summary, patient):
+def render_summary_metrics(obs_summary, med_summary, patient):
     """
     Render summary metrics.
 
     Args:
-        summary: Observation summary dictionary
+        obs_summary: Observation summary dictionary
+        med_summary: Medication summary dictionary
         patient: Patient demographics row
     """
     st.markdown("### Record Summary")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        st.metric("Total Observations", f"{summary['total_observations']:,}")
+        st.metric("Observations", f"{obs_summary['total_observations']:,}")
 
     with col2:
-        earliest = format_date(summary['earliest_date']) if summary['earliest_date'] else "N/A"
-        st.metric("Earliest Record", earliest)
+        st.metric("Medications", f"{med_summary['total_medications']:,}")
 
     with col3:
-        most_recent = format_date(summary['most_recent_date']) if summary['most_recent_date'] else "N/A"
-        st.metric("Most Recent Record", most_recent)
+        earliest_obs = obs_summary['earliest_date']
+        earliest_med = med_summary['earliest_date']
+        earliest = min(filter(None, [earliest_obs, earliest_med]), default=None)
+        earliest_str = format_date(earliest) if earliest else "N/A"
+        st.metric("Earliest Record", earliest_str)
 
     with col4:
+        most_recent_obs = obs_summary['most_recent_date']
+        most_recent_med = med_summary['most_recent_date']
+        most_recent = max(filter(None, [most_recent_obs, most_recent_med]), default=None)
+        most_recent_str = format_date(most_recent) if most_recent else "N/A"
+        st.metric("Most Recent", most_recent_str)
+
+    with col5:
         status = "Active" if patient['IS_ACTIVE'] else "Inactive"
-        st.metric("Registration Status", status)
+        st.metric("Status", status)
 
 
 def render_core_demographics(patient):
