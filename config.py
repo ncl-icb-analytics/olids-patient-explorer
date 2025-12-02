@@ -115,9 +115,10 @@ CUSTOM_CSS = """
         margin: 40px auto;
     }
 
-    /* Hide form border */
+    /* Hide form border and padding */
     [data-testid="stForm"] {
         border: 0px;
+        padding: 0px;
     }
 
     /* Metric cards */
