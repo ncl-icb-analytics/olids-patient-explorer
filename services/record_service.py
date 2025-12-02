@@ -92,8 +92,9 @@ def get_patient_observations(person_id, date_from=None, date_to=None, search_ter
         o.clinical_effective_date,
         o.mapped_concept_code,
         o.mapped_concept_display,
-        o.value_as_string,
-        o.unit,
+        o.result_value,
+        o.result_text,
+        o.result_unit_display,
         o.id
     FROM {TABLE_OBSERVATION} o
     WHERE {where_sql}

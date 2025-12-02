@@ -3,6 +3,7 @@ Patient record view page
 """
 
 import streamlit as st
+import pandas as pd
 from services.patient_service import get_patient_demographics, get_patient_registration_history
 from services.record_service import get_observation_summary, get_patient_observations, calculate_date_range
 from utils.helpers import render_status_badge, format_date, format_boolean, safe_str, format_value_with_unit
@@ -324,8 +325,13 @@ def render_observations_section(person_id):
         # Prepare display dataframe
         display_df = observations.copy()
         display_df['CLINICAL_EFFECTIVE_DATE'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
+
+        # Combine result_value and result_text, preferring numeric value if present
         display_df['VALUE'] = display_df.apply(
-            lambda row: format_value_with_unit(row['VALUE_AS_STRING'], row['UNIT']),
+            lambda row: format_value_with_unit(
+                row['RESULT_VALUE'] if pd.notna(row['RESULT_VALUE']) else row['RESULT_TEXT'],
+                row['RESULT_UNIT_DISPLAY']
+            ),
             axis=1
         )
 
