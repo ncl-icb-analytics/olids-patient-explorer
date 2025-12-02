@@ -145,7 +145,8 @@ def render_core_demographics(patient):
     with col1:
         st.markdown("**Age**")
         st.markdown(f"{safe_str(patient['AGE'])} years")
-        st.markdown(f"<small>Born: {safe_str(patient['BIRTH_YEAR'])}</small>", unsafe_allow_html=True)
+        birth_date = format_date(patient['BIRTH_DATE_APPROX'])
+        st.markdown(f"<small>Born: {birth_date}</small>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("**Gender**")
@@ -168,8 +169,9 @@ def render_core_demographics(patient):
     with col1:
         st.markdown("**Deceased**")
         st.markdown(format_boolean(patient['IS_DECEASED']))
-        if patient['IS_DECEASED'] and patient['DEATH_YEAR']:
-            st.markdown(f"<small>Year: {safe_str(patient['DEATH_YEAR'])}</small>", unsafe_allow_html=True)
+        if patient['IS_DECEASED'] and patient['DEATH_DATE_APPROX']:
+            death_date = format_date(patient['DEATH_DATE_APPROX'])
+            st.markdown(f"<small>Died: {death_date}</small>", unsafe_allow_html=True)
 
     with col2:
         st.markdown("**Dummy Patient**")
