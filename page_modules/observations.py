@@ -93,11 +93,12 @@ def render_observations():
         # Select and rename columns for display
         display_df = display_df[[
             'CLINICAL_EFFECTIVE_DATE',
+            'MAPPED_CONCEPT_CODE',
             'MAPPED_CONCEPT_DISPLAY',
             'VALUE',
             'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Observation', 'Value', 'Practitioner']
+        display_df.columns = ['Date', 'Code', 'Observation', 'Value', 'Practitioner']
 
         # Display table
         st.dataframe(
