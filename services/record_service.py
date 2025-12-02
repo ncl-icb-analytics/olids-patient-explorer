@@ -319,7 +319,7 @@ def get_appointment_summary(person_id):
         }
 
 
-def get_patient_appointments(person_id, date_from=None, date_to=None):
+def get_patient_appointments(person_id, date_from=None, date_to=None, include_future=True):
     """
     Get appointments for a patient with optional filters.
 
@@ -327,18 +327,24 @@ def get_patient_appointments(person_id, date_from=None, date_to=None):
         person_id: Patient identifier
         date_from: Start date filter (optional)
         date_to: End date filter (optional)
+        include_future: Include future appointments regardless of date_from (default True)
 
     Returns:
         DataFrame with appointments
     """
-    from config import TABLE_APPOINTMENT, TABLE_APPOINTMENT_PRACTITIONER, TABLE_PRACTITIONER, MAX_OBSERVATIONS
+    from config import TABLE_APPOINTMENT, TABLE_APPOINTMENT_PRACTITIONER, TABLE_PRACTITIONER, TABLE_CONCEPT, TABLE_CONCEPT_MAP, MAX_OBSERVATIONS
     conn = get_connection()
 
-    # Build WHERE clause
-    where_clauses = [f"a.person_id = '{person_id}'"]
-
-    if date_from:
-        where_clauses.append(f"a.start_date >= '{date_from}'")
+    # Build WHERE clause - always include future appointments if requested
+    if include_future and date_from:
+        where_clauses = [
+            f"a.person_id = '{person_id}'",
+            f"(a.start_date >= '{date_from}' OR a.start_date > CURRENT_DATE())"
+        ]
+    else:
+        where_clauses = [f"a.person_id = '{person_id}'"]
+        if date_from:
+            where_clauses.append(f"a.start_date >= '{date_from}'")
 
     if date_to:
         where_clauses.append(f"a.start_date <= '{date_to}'")
@@ -349,21 +355,32 @@ def get_patient_appointments(person_id, date_from=None, date_to=None):
     SELECT
         a.start_date,
         a.type,
-        a.appointment_status_concept_id,
+        COALESCE(status_concept.code, a.appointment_status_concept_id) as appointment_status,
         a.national_slot_category_name,
-        a.contact_mode_concept_id,
+        COALESCE(contact_concept.code, a.contact_mode_concept_id) as contact_mode,
         a.planned_duration,
         a.actual_duration,
         a.patient_wait,
         p.last_name as practitioner_last_name,
         p.first_name as practitioner_first_name,
         p.title as practitioner_title,
+        CASE WHEN a.start_date > CURRENT_DATE() THEN TRUE ELSE FALSE END as is_future,
         a.id
     FROM {TABLE_APPOINTMENT} a
     LEFT JOIN {TABLE_APPOINTMENT_PRACTITIONER} ap
         ON a.id = ap.appointment_id
     LEFT JOIN {TABLE_PRACTITIONER} p
         ON ap.practitioner_id = p.id
+    LEFT JOIN {TABLE_CONCEPT_MAP} status_map
+        ON a.appointment_status_concept_id = status_map.source_code_id
+        AND status_map.is_primary = TRUE
+    LEFT JOIN {TABLE_CONCEPT} status_concept
+        ON status_map.target_code_id = status_concept.id
+    LEFT JOIN {TABLE_CONCEPT_MAP} contact_map
+        ON a.contact_mode_concept_id = contact_map.source_code_id
+        AND contact_map.is_primary = TRUE
+    LEFT JOIN {TABLE_CONCEPT} contact_concept
+        ON contact_map.target_code_id = contact_concept.id
     WHERE {where_sql}
     ORDER BY a.start_date DESC
     LIMIT {MAX_OBSERVATIONS}
