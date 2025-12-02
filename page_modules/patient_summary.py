@@ -342,12 +342,10 @@ def render_ltc_summary(person_id):
         badges_html = ""
         for _, condition in domain_conditions.iterrows():
             qof_class = "condition-qof" if condition['IS_QOF'] else "condition-other"
-            qof_label = " ⭐ QOF" if condition['IS_QOF'] else ""
+            qof_badge = ' <span style="background-color: #084298; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem; margin-left: 4px;">QOF</span>' if condition['IS_QOF'] else ""
             earliest = format_date(condition['EARLIEST_DIAGNOSIS_DATE'])
-            latest = format_date(condition['LATEST_DIAGNOSIS_DATE'])
-            date_info = f"Dx: {earliest}" if earliest == latest else f"Dx: {earliest} - {latest}"
 
-            badges_html += f'<span class="condition-badge {qof_class}">{condition["CONDITION_NAME"]}{qof_label}<br><small>{date_info}</small></span>'
+            badges_html += f'<span class="condition-badge {qof_class}">{condition["CONDITION_NAME"]}{qof_badge}<br><small>Dx: {earliest}</small></span>'
 
         st.markdown(badges_html, unsafe_allow_html=True)
         st.markdown("")
