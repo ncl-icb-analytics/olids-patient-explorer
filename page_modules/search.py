@@ -21,7 +21,7 @@ def render_search():
         st.session_state.search_results = None
 
     # Search container
-    st.markdown("<div class="search-container">", unsafe_allow_html=True)
+    st.markdown('<div class="search-container">', unsafe_allow_html=True)
 
     # Use a form to enable ENTER key submission
     with st.form(key="search_form", clear_on_submit=False):
@@ -38,7 +38,7 @@ def render_search():
         with col1:
             search_clicked = st.form_submit_button("Search", type="primary", use_container_width=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Perform search
     if search_clicked and search_term:
@@ -87,12 +87,12 @@ def render_patient_card(patient_row):
         col1, col2 = st.columns([3, 1])
 
         with col1:
-            st.markdown(f"#### Patient: {patient_row["PERSON_ID"]}")
-            st.markdown(f"**SK Patient ID:** {patient_row["SK_PATIENT_ID"]}")
+            st.markdown(f"#### Patient: {patient_row['PERSON_ID']}")
+            st.markdown(f"**SK Patient ID:** {patient_row['SK_PATIENT_ID']}")
 
         with col2:
             # Align badge to the right with proper vertical alignment
-            st.markdown("<div style="text-align: right; padding-top: 4px;">", unsafe_allow_html=True)
+            st.markdown("<div style='text-align: right; padding-top: 4px;'>", unsafe_allow_html=True)
             render_status_badge(
                 patient_row["IS_ACTIVE"],
                 patient_row["IS_DECEASED"],
@@ -114,14 +114,14 @@ def render_patient_card(patient_row):
 
         with col3:
             # View record button - aligned with metrics
-            st.markdown("<div style="padding-top: 18px;">", unsafe_allow_html=True)
-            if st.button("View Record", key=f"view_{patient_row["PERSON_ID"]}", type="primary", use_container_width=True):
+            st.markdown("<div style='padding-top: 18px;'>", unsafe_allow_html=True)
+            if st.button("View Record", key=f"view_{patient_row['PERSON_ID']}", type="primary", use_container_width=True):
                 st.session_state.page = "patient_summary"
                 st.session_state.selected_patient = patient_row["PERSON_ID"]
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
         # Practice info - more compact
-        st.markdown(f"**Practice:** {safe_str(patient_row["PRACTICE_NAME"])} | **PCN:** {safe_str(patient_row["PCN_NAME"])}")
+        st.markdown(f"**Practice:** {safe_str(patient_row['PRACTICE_NAME'])} | **PCN:** {safe_str(patient_row['PCN_NAME'])}")
 
         st.markdown("---")
