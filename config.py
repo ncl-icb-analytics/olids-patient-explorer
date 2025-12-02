@@ -122,6 +122,12 @@ CUSTOM_CSS = """
         margin-top: 0px;
     }
 
+    /* Remove spacing from element containers in forms */
+    [data-testid="stForm"] > [data-testid="stElementContainer"] {
+        margin-top: 0px;
+        padding-top: 0px;
+    }
+
     /* Metric cards */
     div[data-testid="metric-container"] {
         background-color: #f8f9fa;
