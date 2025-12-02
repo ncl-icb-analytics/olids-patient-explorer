@@ -5,7 +5,7 @@ Observations view page
 import streamlit as st
 import pandas as pd
 from services.record_service import get_patient_observations, calculate_date_range
-from utils.helpers import format_date, format_value_with_unit
+from utils.helpers import format_date, format_value_with_unit, format_practitioner_name
 from config import DATE_RANGE_OPTIONS
 
 
@@ -80,14 +80,24 @@ def render_observations():
             axis=1
         )
 
+        # Format practitioner name
+        display_df['PRACTITIONER'] = display_df.apply(
+            lambda row: format_practitioner_name(
+                row['PRACTITIONER_LAST_NAME'],
+                row['PRACTITIONER_FIRST_NAME'],
+                row['PRACTITIONER_TITLE']
+            ),
+            axis=1
+        )
+
         # Select and rename columns for display
         display_df = display_df[[
             'CLINICAL_EFFECTIVE_DATE',
-            'MAPPED_CONCEPT_CODE',
             'MAPPED_CONCEPT_DISPLAY',
-            'VALUE'
+            'VALUE',
+            'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'SNOMED Code', 'Description', 'Value']
+        display_df.columns = ['Date', 'Observation', 'Value', 'Practitioner']
 
         # Display table
         st.dataframe(

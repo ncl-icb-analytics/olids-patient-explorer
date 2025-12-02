@@ -4,7 +4,7 @@ Medications view page
 
 import streamlit as st
 from services.record_service import get_patient_medications, calculate_date_range
-from utils.helpers import format_date, safe_str
+from utils.helpers import format_date, safe_str, format_practitioner_name
 from config import DATE_RANGE_OPTIONS
 
 
@@ -93,17 +93,26 @@ def render_medications():
             axis=1
         )
 
+        # Format practitioner name
+        display_df['PRACTITIONER'] = display_df.apply(
+            lambda row: format_practitioner_name(
+                row['PRACTITIONER_LAST_NAME'],
+                row['PRACTITIONER_FIRST_NAME'],
+                row['PRACTITIONER_TITLE']
+            ),
+            axis=1
+        )
+
         # Select and rename columns for display
         display_df = display_df[[
             'CLINICAL_EFFECTIVE_DATE',
             'TYPE',
             'MAPPED_CONCEPT_DISPLAY',
             'DOSE_INFO',
-            'QUANTITY_INFO',
             'DURATION_INFO',
-            'BNF_REFERENCE'
+            'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Type', 'Medication', 'Dose', 'Quantity', 'Duration', 'BNF']
+        display_df.columns = ['Date', 'Type', 'Medication', 'Dose', 'Duration', 'Prescriber']
 
         # Display table
         st.dataframe(

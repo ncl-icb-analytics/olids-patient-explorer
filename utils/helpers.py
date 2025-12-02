@@ -95,3 +95,35 @@ def safe_str(value):
     if value is None or value == "":
         return "N/A"
     return str(value)
+
+
+def format_practitioner_name(last_name, first_name, title):
+    """
+    Format practitioner name as: LAST_NAME, First_Name (Title)
+
+    Args:
+        last_name: Practitioner last name
+        first_name: Practitioner first name
+        title: Practitioner title
+
+    Returns:
+        Formatted name string or 'N/A'
+    """
+    if not last_name or last_name == "N/A":
+        return "N/A"
+
+    # Format: LAST_NAME, First_Name
+    name_parts = []
+    if last_name:
+        name_parts.append(last_name.upper())
+    if first_name and first_name != "N/A":
+        first_formatted = first_name.capitalize() if first_name else ""
+        name_parts.append(first_formatted)
+
+    name = ", ".join(name_parts) if len(name_parts) > 1 else (name_parts[0] if name_parts else "N/A")
+
+    # Add title if present
+    if title and title != "N/A":
+        name = f"{name} ({title})"
+
+    return name

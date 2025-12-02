@@ -5,7 +5,7 @@ Patient records service for observations and medications
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, TABLE_MEDICATION_STATEMENT, MAX_OBSERVATIONS
+from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, TABLE_MEDICATION_STATEMENT, TABLE_PRACTITIONER, MAX_OBSERVATIONS
 from database import get_connection
 
 
@@ -95,8 +95,13 @@ def get_patient_observations(person_id, date_from=None, date_to=None, search_ter
         o.result_value,
         o.result_text,
         o.result_unit_display,
+        p.last_name as practitioner_last_name,
+        p.first_name as practitioner_first_name,
+        p.title as practitioner_title,
         o.id
     FROM {TABLE_OBSERVATION} o
+    LEFT JOIN {TABLE_PRACTITIONER} p
+        ON o.practitioner_id = p.id
     WHERE {where_sql}
     ORDER BY o.clinical_effective_date DESC
     LIMIT {MAX_OBSERVATIONS}
@@ -202,10 +207,15 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
         ms.bnf_reference,
         ms.issue_method as statement_issue_method,
         ms.is_active as statement_is_active,
+        p.last_name as practitioner_last_name,
+        p.first_name as practitioner_first_name,
+        p.title as practitioner_title,
         m.id
     FROM {TABLE_MEDICATION_ORDER} m
     LEFT JOIN {TABLE_MEDICATION_STATEMENT} ms
         ON m.medication_statement_id = ms.id
+    LEFT JOIN {TABLE_PRACTITIONER} p
+        ON m.practitioner_id = p.id
     WHERE {where_sql}
     ORDER BY m.clinical_effective_date DESC
     LIMIT {MAX_OBSERVATIONS}

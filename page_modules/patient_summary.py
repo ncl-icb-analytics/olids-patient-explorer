@@ -48,11 +48,10 @@ def render_patient_summary():
     # Render summary metrics
     render_summary_metrics(obs_summary, med_summary, patient)
 
-    # Navigation buttons to different views
-    st.markdown("---")
-    st.markdown("### View Patient Records")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
+    # Navigation buttons to different views
+    col1, col2 = st.columns(2)
 
     with col1:
         if st.button("📊 View Observations", use_container_width=True, type="primary"):
@@ -64,10 +63,9 @@ def render_patient_summary():
             st.session_state.page = "medications"
             st.rerun()
 
-    # Demographics details in tabs
-    st.markdown("---")
-    st.markdown("### Patient Demographics")
+    st.markdown("<br>", unsafe_allow_html=True)
 
+    # Demographics details in tabs
     tab1, tab2, tab3, tab4 = st.tabs(["👤 Core Demographics", "🏥 Registration", "📍 Geography", "🗣️ Language"])
 
     with tab1:
@@ -82,8 +80,9 @@ def render_patient_summary():
     with tab4:
         render_language_info(patient)
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # Registration history (optional expandable section)
-    st.markdown("---")
     render_registration_history(person_id)
 
 
