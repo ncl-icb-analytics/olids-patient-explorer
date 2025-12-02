@@ -152,10 +152,11 @@ def render_medications():
             'TYPE',
             'MAPPED_CONCEPT_DISPLAY',
             'DOSE_INFO',
+            'QUANTITY_INFO',
             'DURATION_INFO',
             'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Status', 'Type', 'Medication', 'Dose', 'Duration', 'Prescriber']
+        display_df.columns = ['Date', 'Status', 'Type', 'Medication', 'Dose', 'Quantity', 'Duration', 'Prescriber']
 
         # Display table
         st.dataframe(
