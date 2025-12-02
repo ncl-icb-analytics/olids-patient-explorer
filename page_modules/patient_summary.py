@@ -5,7 +5,7 @@ Patient summary page - landing page when viewing a patient record
 import streamlit as st
 from services.patient_service import get_patient_demographics, get_patient_registration_history, get_patient_ltc_summary
 from services.record_service import get_observation_summary, get_medication_summary
-from utils.helpers import render_status_badge, format_date, format_boolean, safe_str
+from utils.helpers import render_status_badge, format_date, format_boolean, safe_str, format_month_year
 
 
 def render_patient_summary():
@@ -158,12 +158,13 @@ def render_summary_metrics(obs_summary, med_summary, patient):
 
 def render_core_demographics(patient):
     """Render core demographics section."""
+    # Row 1: Personal demographics
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown("**Age**")
         st.markdown(f"{safe_str(patient['AGE'])} years")
-        birth_date = format_date(patient['BIRTH_DATE_APPROX'])
+        birth_date = format_month_year(patient['BIRTH_DATE_APPROX'])
         st.markdown(f"<small>Born: {birth_date}</small>", unsafe_allow_html=True)
 
     with col2:
@@ -182,25 +183,36 @@ def render_core_demographics(patient):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # Row 2: Practice and deceased status
     col1, col2, col3 = st.columns(3)
 
     with col1:
+        st.markdown("**GP Practice**")
+        st.markdown(safe_str(patient['PRACTICE_NAME']))
+        st.markdown(f"<small>Code: {safe_str(patient['PRACTICE_CODE'])}</small>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("**PCN**")
+        st.markdown(safe_str(patient['PCN_NAME']))
+
+    with col3:
         st.markdown("**Deceased**")
         st.markdown(format_boolean(patient['IS_DECEASED']))
         if patient['IS_DECEASED'] and patient['DEATH_DATE_APPROX']:
-            death_date = format_date(patient['DEATH_DATE_APPROX'])
+            death_date = format_month_year(patient['DEATH_DATE_APPROX'])
             st.markdown(f"<small>Died: {death_date}</small>", unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("**Dummy Patient**")
-        st.markdown(format_boolean(patient['IS_DUMMY_PATIENT']))
+    # Row 3: School age (only if under 18)
+    if patient['AGE'] < 18:
+        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns(3)
 
-    with col3:
-        st.markdown("**School Age**")
-        primary = format_boolean(patient['IS_PRIMARY_SCHOOL_AGE'])
-        secondary = format_boolean(patient['IS_SECONDARY_SCHOOL_AGE'])
-        st.markdown(f"Primary: {primary}")
-        st.markdown(f"Secondary: {secondary}")
+        with col1:
+            st.markdown("**School Age**")
+            primary = format_boolean(patient['IS_PRIMARY_SCHOOL_AGE'])
+            secondary = format_boolean(patient['IS_SECONDARY_SCHOOL_AGE'])
+            st.markdown(f"Primary: {primary}")
+            st.markdown(f"Secondary: {secondary}")
 
 
 def render_registration_info(patient):

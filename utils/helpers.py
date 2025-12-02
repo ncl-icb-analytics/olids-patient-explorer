@@ -127,3 +127,24 @@ def format_practitioner_name(last_name, first_name, title):
         name = f"{name} ({title})"
 
     return name
+
+def format_month_year(date_value):
+    """
+    Format date as month and year only (e.g., "Aug 1967").
+
+    Args:
+        date_value: Date value (datetime, date, or string)
+
+    Returns:
+        Formatted date string as "MMM YYYY" or 'N/A'
+    """
+    if date_value is None:
+        return "N/A"
+
+    try:
+        if isinstance(date_value, str):
+            date_value = datetime.strptime(date_value, "%Y-%m-%d")
+
+        return date_value.strftime("%b %Y")
+    except:
+        return str(date_value)
