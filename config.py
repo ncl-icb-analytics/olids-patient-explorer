@@ -47,8 +47,8 @@ CUSTOM_CSS = """
 <style>
     /* Status badges */
     .status-active {
-        background-color: #d4edda;
-        color: #155724;
+        background-color: #28a745;
+        color: #ffffff;
         padding: 6px 16px;
         border-radius: 6px;
         font-weight: 600;
@@ -59,8 +59,8 @@ CUSTOM_CSS = """
     }
 
     .status-inactive {
-        background-color: #f8d7da;
-        color: #721c24;
+        background-color: #dc3545;
+        color: #ffffff;
         padding: 6px 16px;
         border-radius: 6px;
         font-weight: 600;
@@ -71,7 +71,7 @@ CUSTOM_CSS = """
     }
 
     .status-deceased {
-        background-color: #495057;
+        background-color: #6c757d;
         color: #ffffff;
         padding: 6px 16px;
         border-radius: 6px;

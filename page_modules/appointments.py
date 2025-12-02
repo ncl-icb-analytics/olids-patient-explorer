@@ -4,7 +4,7 @@ Appointments view page
 
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import altair as alt
 from services.record_service import get_patient_appointments, calculate_date_range
 from utils.helpers import format_date, safe_str, format_practitioner_name
 from config import DATE_RANGE_OPTIONS
@@ -62,105 +62,104 @@ def render_appointments():
         display_df = appointments.copy()
 
         # Convert start_date to datetime for plotting
-        display_df['START_DATE'] = pd.to_datetime(display_df['START_DATE'])
+        display_df["START_DATE"] = pd.to_datetime(display_df["START_DATE"])
 
         # Create year-month for grouping
-        display_df['YEAR_MONTH'] = display_df['START_DATE'].dt.to_period('M').astype(str)
+        display_df["YEAR_MONTH"] = display_df["START_DATE"].dt.to_period("M").astype(str)
 
         # Map status concepts to readable names
         status_mapping = {
-            'booked': 'Booked',
-            'arrived': 'Arrived',
-            'fulfilled': 'Fulfilled',
-            'cancelled': 'Cancelled',
-            'noshow': 'No Show',
-            'entered-in-error': 'Error'
+            "booked": "Booked",
+            "arrived": "Arrived",
+            "fulfilled": "Fulfilled",
+            "cancelled": "Cancelled",
+            "noshow": "No Show",
+            "entered-in-error": "Error"
         }
-        display_df['STATUS'] = display_df['APPOINTMENT_STATUS_CONCEPT_ID'].apply(
-            lambda x: status_mapping.get(str(x).lower(), safe_str(x)) if pd.notna(x) else 'Unknown'
+        display_df["STATUS"] = display_df["APPOINTMENT_STATUS_CONCEPT_ID"].apply(
+            lambda x: status_mapping.get(str(x).lower(), safe_str(x)) if pd.notna(x) else "Unknown"
         )
 
         # Clean up slot category names
-        display_df['SLOT_CATEGORY'] = display_df['NATIONAL_SLOT_CATEGORY_NAME'].apply(
-            lambda x: safe_str(x) if x and x != 'N/A' else 'Not Specified'
+        display_df["SLOT_CATEGORY"] = display_df["NATIONAL_SLOT_CATEGORY_NAME"].apply(
+            lambda x: safe_str(x) if x and x != "N/A" else "Not Specified"
         )
 
         # Visualization Section
         st.markdown("### 📊 Appointment Trends")
 
-        # Group by month, status, and slot category
-        monthly_counts = display_df.groupby(['YEAR_MONTH', 'STATUS', 'SLOT_CATEGORY']).size().reset_index(name='COUNT')
+        # Group by month and status
+        status_counts = display_df.groupby(["YEAR_MONTH", "STATUS"]).size().reset_index(name="COUNT")
 
-        # Create timeline chart colored by status
-        fig = px.bar(
-            monthly_counts,
-            x='YEAR_MONTH',
-            y='COUNT',
-            color='STATUS',
-            title='Appointments Over Time by Status',
-            labels={'YEAR_MONTH': 'Month', 'COUNT': 'Number of Appointments'},
+        # Create timeline chart colored by status using Altair
+        status_chart = alt.Chart(status_counts).mark_bar().encode(
+            x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("COUNT:Q", title="Number of Appointments"),
+            color=alt.Color("STATUS:N", title="Status"),
+            tooltip=["YEAR_MONTH:N", "STATUS:N", "COUNT:Q"]
+        ).properties(
+            title="Appointments Over Time by Status",
             height=400
         )
-        fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+        st.altair_chart(status_chart, use_container_width=True)
 
         # Second chart: by slot category
-        slot_counts = display_df.groupby(['YEAR_MONTH', 'SLOT_CATEGORY']).size().reset_index(name='COUNT')
-        fig2 = px.bar(
-            slot_counts,
-            x='YEAR_MONTH',
-            y='COUNT',
-            color='SLOT_CATEGORY',
-            title='Appointments Over Time by Slot Category',
-            labels={'YEAR_MONTH': 'Month', 'COUNT': 'Number of Appointments'},
+        slot_counts = display_df.groupby(["YEAR_MONTH", "SLOT_CATEGORY"]).size().reset_index(name="COUNT")
+
+        slot_chart = alt.Chart(slot_counts).mark_bar().encode(
+            x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y("COUNT:Q", title="Number of Appointments"),
+            color=alt.Color("SLOT_CATEGORY:N", title="Slot Category"),
+            tooltip=["YEAR_MONTH:N", "SLOT_CATEGORY:N", "COUNT:Q"]
+        ).properties(
+            title="Appointments Over Time by Slot Category",
             height=400
         )
-        fig2.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.altair_chart(slot_chart, use_container_width=True)
 
         st.markdown("### 📋 Appointment Details")
 
         # Format for table display
-        display_df['DATE_DISPLAY'] = display_df['START_DATE'].apply(
+        display_df["DATE_DISPLAY"] = display_df["START_DATE"].apply(
             lambda x: x.strftime("%d %b %Y %H:%M") if pd.notna(x) else "N/A"
         )
 
         # Map contact mode
         contact_mapping = {
-            'face-to-face': 'Face-to-Face',
-            'telephone': 'Telephone',
-            'video': 'Video',
-            'online': 'Online'
+            "face-to-face": "Face-to-Face",
+            "telephone": "Telephone",
+            "video": "Video",
+            "online": "Online"
         }
-        display_df['CONTACT_MODE'] = display_df['CONTACT_MODE_CONCEPT_ID'].apply(
-            lambda x: contact_mapping.get(str(x).lower(), safe_str(x)) if pd.notna(x) else 'Not Specified'
+        display_df["CONTACT_MODE"] = display_df["CONTACT_MODE_CONCEPT_ID"].apply(
+            lambda x: contact_mapping.get(str(x).lower(), safe_str(x)) if pd.notna(x) else "Not Specified"
         )
 
         # Format practitioner name
-        display_df['PRACTITIONER'] = display_df.apply(
+        display_df["PRACTITIONER"] = display_df.apply(
             lambda row: format_practitioner_name(
-                row['PRACTITIONER_LAST_NAME'],
-                row['PRACTITIONER_FIRST_NAME'],
-                row['PRACTITIONER_TITLE']
+                row["PRACTITIONER_LAST_NAME"],
+                row["PRACTITIONER_FIRST_NAME"],
+                row["PRACTITIONER_TITLE"]
             ),
             axis=1
         )
 
         # Format duration
-        display_df['DURATION'] = display_df['PLANNED_DURATION'].apply(
+        display_df["DURATION"] = display_df["PLANNED_DURATION"].apply(
             lambda x: f"{int(x)} min" if pd.notna(x) else "N/A"
         )
 
         # Select and rename columns for display
         table_df = display_df[[
-            'DATE_DISPLAY',
-            'STATUS',
-            'SLOT_CATEGORY',
-            'CONTACT_MODE',
-            'DURATION',
-            'PRACTITIONER'
+            "DATE_DISPLAY",
+            "STATUS",
+            "SLOT_CATEGORY",
+            "CONTACT_MODE",
+            "DURATION",
+            "PRACTITIONER"
         ]]
-        table_df.columns = ['Date & Time', 'Status', 'Slot Category', 'Contact Mode', 'Duration', 'Practitioner']
+        table_df.columns = ["Date & Time", "Status", "Slot Category", "Contact Mode", "Duration", "Practitioner"]
 
         # Display table
         st.dataframe(

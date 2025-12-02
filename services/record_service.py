@@ -284,7 +284,11 @@ def get_appointment_summary(person_id):
     SELECT
         COUNT(*) as total_appointments,
         MIN(start_date) as earliest_date,
-        MAX(start_date) as most_recent_date
+        MAX(start_date) as most_recent_date,
+        COUNT(CASE
+            WHEN start_date >= DATEADD(month, -12, CURRENT_DATE())
+            THEN 1
+        END) as appointments_last_12m
     FROM {TABLE_APPOINTMENT}
     WHERE person_id = '{person_id}'
     """
@@ -294,6 +298,7 @@ def get_appointment_summary(person_id):
         if result.empty:
             return {
                 "total_appointments": 0,
+                "appointments_last_12m": 0,
                 "earliest_date": None,
                 "most_recent_date": None
             }
@@ -301,6 +306,7 @@ def get_appointment_summary(person_id):
         row = result.iloc[0]
         return {
             "total_appointments": int(row["TOTAL_APPOINTMENTS"]),
+            "appointments_last_12m": int(row["APPOINTMENTS_LAST_12M"]),
             "earliest_date": row["EARLIEST_DATE"],
             "most_recent_date": row["MOST_RECENT_DATE"]
         }

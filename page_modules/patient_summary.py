@@ -23,13 +23,7 @@ def render_patient_summary():
 
     person_id = st.session_state.selected_patient
 
-    # Back button
-    if st.button("← Back to Search"):
-        st.session_state.page = "search"
-        st.session_state.search_results = None
-        st.rerun()
-
-    # Load patient data with spinner
+    # Load patient data with spinner (before showing any UI)
     with st.spinner("Loading patient summary..."):
         # Load patient demographics
         demographics = get_patient_demographics(person_id)
@@ -44,6 +38,12 @@ def render_patient_summary():
         obs_summary = get_observation_summary(person_id)
         med_summary = get_medication_summary(person_id)
         appt_summary = get_appointment_summary(person_id)
+
+    # Back button
+    if st.button("← Back to Search"):
+        st.session_state.page = "search"
+        st.session_state.search_results = None
+        st.rerun()
 
     # Render patient header
     render_patient_header(patient)
@@ -134,7 +134,7 @@ def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
     """
     st.markdown("### Record Summary")
 
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric("Observations", f"{obs_summary['total_observations']:,}")
@@ -142,30 +142,22 @@ def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
     with col2:
         active_count = med_summary['active_medications']
         total_count = med_summary['total_medications']
-        st.metric("Medications", f"{active_count} / {total_count:,}")
+        st.metric("Medications (Active)", f"{active_count:,}")
+        st.caption(f"Total: {total_count:,}")
 
     with col3:
-        st.metric("Appointments", f"{appt_summary['total_appointments']:,}")
+        appts_12m = appt_summary['appointments_last_12m']
+        total_appts = appt_summary['total_appointments']
+        st.metric("Appointments (12m)", f"{appts_12m:,}")
+        st.caption(f"All time: {total_appts:,}")
 
     with col4:
-        earliest_obs = obs_summary['earliest_date']
-        earliest_med = med_summary['earliest_date']
-        earliest_appt = appt_summary['earliest_date']
-        earliest = min(filter(None, [earliest_obs, earliest_med, earliest_appt]), default=None)
-        earliest_str = format_date(earliest) if earliest else "N/A"
-        st.metric("Earliest Record", earliest_str)
-
-    with col5:
         most_recent_obs = obs_summary['most_recent_date']
         most_recent_med = med_summary['most_recent_date']
         most_recent_appt = appt_summary['most_recent_date']
         most_recent = max(filter(None, [most_recent_obs, most_recent_med, most_recent_appt]), default=None)
         most_recent_str = format_date(most_recent) if most_recent else "N/A"
         st.metric("Most Recent", most_recent_str)
-
-    with col6:
-        status = "Active" if patient['IS_ACTIVE'] else "Inactive"
-        st.metric("Status", status)
 
 
 def render_core_demographics(patient):
