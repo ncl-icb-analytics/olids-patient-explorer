@@ -1,0 +1,46 @@
+"""
+OLIDS Patient Record Explorer
+Main application entry point
+"""
+
+import streamlit as st
+from config import PAGE_CONFIG, CUSTOM_CSS
+from database import get_connection
+
+
+def main():
+    """
+    Main application function.
+    """
+    # Page configuration
+    st.set_page_config(**PAGE_CONFIG)
+
+    # Apply custom CSS
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+    # Initialize database connection
+    conn = get_connection()
+
+    # Initialize session state
+    if 'page' not in st.session_state:
+        st.session_state.page = 'search'
+
+    if 'selected_patient' not in st.session_state:
+        st.session_state.selected_patient = None
+
+    # Page routing
+    if st.session_state.page == 'search':
+        from page_modules.search import render_search
+        render_search()
+    elif st.session_state.page == 'patient_record':
+        from page_modules.patient_record import render_patient_record
+        render_patient_record()
+    else:
+        # Default to search page
+        st.session_state.page = 'search'
+        from page_modules.search import render_search
+        render_search()
+
+
+if __name__ == "__main__":
+    main()

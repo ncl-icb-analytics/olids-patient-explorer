@@ -1,0 +1,117 @@
+"""
+Configuration settings for OLIDS Patient Record Explorer
+"""
+
+# Database configuration
+DB_STORE = "DATA_LAKE.OLIDS"
+DB_DEMOGRAPHICS = "REPORTING.OLIDS_PERSON_DEMOGRAPHICS"
+
+# Table names
+TABLE_OBSERVATION = f"{DB_STORE}.observation"
+TABLE_DIM_PERSON = f"{DB_DEMOGRAPHICS}.DIM_PERSON_DEMOGRAPHICS"
+TABLE_DIM_PERSON_HISTORICAL = f"{DB_DEMOGRAPHICS}.DIM_PERSON_DEMOGRAPHICS_HISTORICAL"
+
+# Snowflake configuration
+ROLE = "ISL-USERGROUP-SECONDEES-NCL"
+WAREHOUSE = "WH_NCL_ENGINEERING_XS"
+
+# Page configuration
+PAGE_CONFIG = {
+    "page_title": "OLIDS Patient Record Explorer",
+    "page_icon": "📋",
+    "layout": "wide",
+    "initial_sidebar_state": "collapsed"
+}
+
+# Query limits
+MAX_OBSERVATIONS = 1000
+
+# Date range filter options
+DATE_RANGE_OPTIONS = {
+    "Last 30 days": 30,
+    "Last 90 days": 90,
+    "Last 365 days": 365,
+    "All time": None
+}
+
+# Custom CSS for styling
+CUSTOM_CSS = """
+<style>
+    /* Status badges */
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-deceased {
+        background-color: #495057;
+        color: #ffffff;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    /* Patient header */
+    .patient-header {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    /* Demographics grid */
+    .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .demo-item {
+        background-color: #ffffff;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    .demo-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .demo-value {
+        font-size: 1rem;
+        color: #212529;
+    }
+
+    /* Search box styling */
+    .search-container {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+
+    /* Metric cards */
+    div[data-testid="metric-container"] {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 16px;
+        border-radius: 8px;
+    }
+</style>
+"""
