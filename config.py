@@ -45,36 +45,37 @@ CUSTOM_CSS = """
     .status-active {
         background-color: #d4edda;
         color: #155724;
-        padding: 4px 12px;
-        border-radius: 4px;
+        padding: 6px 16px;
+        border-radius: 6px;
         font-weight: 600;
         display: inline-block;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .status-inactive {
         background-color: #f8d7da;
         color: #721c24;
-        padding: 4px 12px;
-        border-radius: 4px;
+        padding: 6px 16px;
+        border-radius: 6px;
         font-weight: 600;
         display: inline-block;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .status-deceased {
         background-color: #495057;
         color: #ffffff;
-        padding: 4px 12px;
-        border-radius: 4px;
+        padding: 6px 16px;
+        border-radius: 6px;
         font-weight: 600;
         display: inline-block;
-    }
-
-    /* Patient header */
-    .patient-header {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     /* Demographics grid */

@@ -93,21 +93,20 @@ def render_patient_header(patient):
     Args:
         patient: Patient demographics row
     """
-    st.markdown('<div class="patient-header">', unsafe_allow_html=True)
-
-    # Title and status
-    col1, col2 = st.columns([3, 1])
+    # Title and status - no background div
+    col1, col2 = st.columns([4, 1])
     with col1:
         st.markdown(f"## Patient Record: {patient['PERSON_ID']}")
         st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
     with col2:
+        # Align badge to the right
+        st.markdown("<div style='text-align: right; padding-top: 8px;'>", unsafe_allow_html=True)
         render_status_badge(
             patient['IS_ACTIVE'],
             patient['IS_DECEASED'],
             patient.get('INACTIVE_REASON')
         )
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_summary_metrics(obs_summary, med_summary, patient):

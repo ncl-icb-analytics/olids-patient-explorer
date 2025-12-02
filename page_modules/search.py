@@ -95,28 +95,25 @@ def render_patient_card(patient_row):
                 patient_row.get('INACTIVE_REASON')
             )
 
-        # Demographics summary
-        col1, col2, col3, col4 = st.columns(4)
+        # Demographics summary and button
+        col1, col2, col3 = st.columns([1, 1, 2])
 
         with col1:
-            st.metric("Age", safe_str(patient_row['AGE']))
+            st.metric("Age", f"{safe_str(patient_row['AGE'])} years")
 
         with col2:
             st.metric("Gender", safe_str(patient_row['GENDER']))
 
         with col3:
-            st.metric("Ethnicity", safe_str(patient_row['ETHNICITY_SUBCATEGORY']))
-
-        with col4:
-            # View record button
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("View Record", key=f"view_{patient_row['PERSON_ID']}", type="primary"):
+            # View record button - aligned with metrics
+            st.markdown("<div style='padding-top: 18px;'>", unsafe_allow_html=True)
+            if st.button("View Record", key=f"view_{patient_row['PERSON_ID']}", type="primary", use_container_width=True):
                 st.session_state.page = "patient_summary"
                 st.session_state.selected_patient = patient_row['PERSON_ID']
                 st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        # Practice info
-        st.markdown(f"**Practice:** {safe_str(patient_row['PRACTICE_NAME'])}")
-        st.markdown(f"**PCN:** {safe_str(patient_row['PCN_NAME'])}")
+        # Practice info - more compact
+        st.markdown(f"**Practice:** {safe_str(patient_row['PRACTICE_NAME'])} | **PCN:** {safe_str(patient_row['PCN_NAME'])}")
 
         st.markdown("---")
