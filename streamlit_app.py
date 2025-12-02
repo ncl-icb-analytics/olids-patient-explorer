@@ -32,9 +32,15 @@ def main():
     if st.session_state.page == 'search':
         from page_modules.search import render_search
         render_search()
-    elif st.session_state.page == 'patient_record':
-        from page_modules.patient_record import render_patient_record
-        render_patient_record()
+    elif st.session_state.page == 'patient_summary':
+        from page_modules.patient_summary import render_patient_summary
+        render_patient_summary()
+    elif st.session_state.page == 'observations':
+        from page_modules.observations import render_observations
+        render_observations()
+    elif st.session_state.page == 'medications':
+        from page_modules.medications import render_medications
+        render_medications()
     else:
         # Default to search page
         st.session_state.page = 'search'

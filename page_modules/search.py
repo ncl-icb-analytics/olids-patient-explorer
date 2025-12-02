@@ -111,7 +111,7 @@ def render_patient_card(patient_row):
             # View record button
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("View Record", key=f"view_{patient_row['PERSON_ID']}", type="primary"):
-                st.session_state.page = "patient_record"
+                st.session_state.page = "patient_summary"
                 st.session_state.selected_patient = patient_row['PERSON_ID']
                 st.rerun()
 

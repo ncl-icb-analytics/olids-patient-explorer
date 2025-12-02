@@ -5,7 +5,7 @@ Patient records service for observations and medications
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from config import TABLE_OBSERVATION, MAX_OBSERVATIONS
+from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, MAX_OBSERVATIONS
 from database import get_connection
 
 
@@ -107,6 +107,107 @@ def get_patient_observations(person_id, date_from=None, date_to=None, search_ter
         return result
     except Exception as e:
         st.error(f"Error loading observations: {str(e)}")
+        return pd.DataFrame()
+
+
+def get_medication_summary(person_id):
+    """
+    Get summary statistics for patient medications.
+
+    Args:
+        person_id: Patient identifier
+
+    Returns:
+        Dictionary with summary stats
+    """
+    conn = get_connection()
+
+    query = f"""
+    SELECT
+        COUNT(*) as total_medications,
+        MIN(clinical_effective_date) as earliest_date,
+        MAX(clinical_effective_date) as most_recent_date
+    FROM {TABLE_MEDICATION_ORDER}
+    WHERE person_id = '{person_id}'
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        if result.empty:
+            return {
+                "total_medications": 0,
+                "earliest_date": None,
+                "most_recent_date": None
+            }
+
+        row = result.iloc[0]
+        return {
+            "total_medications": int(row["TOTAL_MEDICATIONS"]),
+            "earliest_date": row["EARLIEST_DATE"],
+            "most_recent_date": row["MOST_RECENT_DATE"]
+        }
+    except Exception as e:
+        st.error(f"Error loading medication summary: {str(e)}")
+        return {
+            "total_medications": 0,
+            "earliest_date": None,
+            "most_recent_date": None
+        }
+
+
+def get_patient_medications(person_id, date_from=None, date_to=None, search_term=""):
+    """
+    Get medications for a patient with optional filters.
+
+    Args:
+        person_id: Patient identifier
+        date_from: Start date filter (optional)
+        date_to: End date filter (optional)
+        search_term: Search term for code or description (optional)
+
+    Returns:
+        DataFrame with medications
+    """
+    conn = get_connection()
+
+    # Build WHERE clause
+    where_clauses = [f"m.person_id = '{person_id}'"]
+
+    if date_from:
+        where_clauses.append(f"m.clinical_effective_date >= '{date_from}'")
+
+    if date_to:
+        where_clauses.append(f"m.clinical_effective_date <= '{date_to}'")
+
+    if search_term and search_term.strip():
+        search_pattern = f"%{search_term}%"
+        where_clauses.append(
+            f"(m.mapped_concept_code ILIKE '{search_pattern}' "
+            f"OR m.mapped_concept_display ILIKE '{search_pattern}')"
+        )
+
+    where_sql = " AND ".join(where_clauses)
+
+    query = f"""
+    SELECT
+        m.clinical_effective_date,
+        m.mapped_concept_code,
+        m.mapped_concept_display,
+        m.dose,
+        m.quantity_value,
+        m.quantity_unit,
+        m.id
+    FROM {TABLE_MEDICATION_ORDER} m
+    WHERE {where_sql}
+    ORDER BY m.clinical_effective_date DESC
+    LIMIT {MAX_OBSERVATIONS}
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        return result
+    except Exception as e:
+        st.error(f"Error loading medications: {str(e)}")
         return pd.DataFrame()
 
 
