@@ -339,7 +339,7 @@ def get_patient_appointments(person_id, date_from=None, date_to=None, include_fu
     if include_future and date_from:
         where_clauses = [
             f"a.person_id = '{person_id}'",
-            f"(a.start_date >= '{date_from}' OR a.start_date > CURRENT_DATE())"
+            f"(a.start_date >= '{date_from}' OR a.start_date >= CURRENT_TIMESTAMP())"
         ]
     else:
         where_clauses = [f"a.person_id = '{person_id}'"]
@@ -364,7 +364,7 @@ def get_patient_appointments(person_id, date_from=None, date_to=None, include_fu
         p.last_name as practitioner_last_name,
         p.first_name as practitioner_first_name,
         p.title as practitioner_title,
-        CASE WHEN a.start_date > CURRENT_DATE() THEN TRUE ELSE FALSE END as is_future,
+        CASE WHEN a.start_date >= CURRENT_TIMESTAMP() THEN TRUE ELSE FALSE END as is_future,
         a.id
     FROM {TABLE_APPOINTMENT} a
     LEFT JOIN {TABLE_APPOINTMENT_PRACTITIONER} ap
