@@ -179,7 +179,6 @@ def render_core_demographics(patient):
     with col4:
         st.markdown("**Life Stage**")
         st.markdown(safe_str(patient['AGE_LIFE_STAGE']))
-        st.markdown(f"<small>{safe_str(patient['AGE_BAND_NHS'])}</small>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
