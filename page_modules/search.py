@@ -89,11 +89,14 @@ def render_patient_card(patient_row):
             st.markdown(f"**SK Patient ID:** {patient_row['SK_PATIENT_ID']}")
 
         with col2:
+            # Align badge to the right with proper vertical alignment
+            st.markdown("<div style='text-align: right; padding-top: 4px;'>", unsafe_allow_html=True)
             render_status_badge(
                 patient_row['IS_ACTIVE'],
                 patient_row['IS_DECEASED'],
                 patient_row.get('INACTIVE_REASON')
             )
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Demographics summary and button
         col1, col2, col3 = st.columns([1, 1, 2])

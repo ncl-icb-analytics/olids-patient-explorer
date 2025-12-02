@@ -106,8 +106,8 @@ def render_patient_header(patient):
         st.markdown(f"## Patient Record: {patient['PERSON_ID']}")
         st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
     with col2:
-        # Align badge to the right
-        st.markdown("<div style='text-align: right; padding-top: 8px;'>", unsafe_allow_html=True)
+        # Align badge to the right with proper vertical alignment
+        st.markdown("<div style='text-align: right; padding-top: 12px;'>", unsafe_allow_html=True)
         render_status_badge(
             patient['IS_ACTIVE'],
             patient['IS_DECEASED'],
