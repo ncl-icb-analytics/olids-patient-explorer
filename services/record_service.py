@@ -130,15 +130,20 @@ def get_medication_summary(person_id):
     query = f"""
     SELECT
         COUNT(*) as total_medications,
-        MIN(clinical_effective_date) as earliest_date,
-        MAX(clinical_effective_date) as most_recent_date,
+        MIN(m.clinical_effective_date) as earliest_date,
+        MAX(m.clinical_effective_date) as most_recent_date,
         COUNT(CASE
-            WHEN duration_days IS NOT NULL
-            AND DATEADD(day, duration_days, clinical_effective_date) >= CURRENT_DATE()
+            WHEN ms.cancellation_date IS NOT NULL AND ms.cancellation_date <= CURRENT_DATE() THEN NULL
+            WHEN ms.expiry_date IS NOT NULL AND ms.expiry_date < CURRENT_DATE() THEN NULL
+            WHEN ms.is_active = FALSE THEN NULL
+            WHEN m.duration_days IS NOT NULL
+                AND DATEADD(day, m.duration_days, m.clinical_effective_date) > CURRENT_DATE()
             THEN 1
         END) as active_medications
-    FROM {TABLE_MEDICATION_ORDER}
-    WHERE person_id = '{person_id}'
+    FROM {TABLE_MEDICATION_ORDER} m
+    LEFT JOIN {TABLE_MEDICATION_STATEMENT} ms
+        ON m.medication_statement_id = ms.id
+    WHERE m.person_id = '{person_id}'
     """
 
     try:
@@ -211,10 +216,12 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
         m.quantity_unit,
         m.duration_days,
         m.estimated_cost,
-        m.issue_method_description,
+        m.issue_method,
         ms.bnf_reference,
         ms.issue_method as statement_issue_method,
         ms.is_active as statement_is_active,
+        ms.cancellation_date,
+        ms.expiry_date,
         p.last_name as practitioner_last_name,
         p.first_name as practitioner_first_name,
         p.title as practitioner_title,

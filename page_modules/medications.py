@@ -71,21 +71,39 @@ def render_medications():
         # Prepare display dataframe
         display_df = medications.copy()
 
-        # Calculate medication status based on date + duration
+        # Calculate medication status based on cancellation, expiry, and duration
         def calculate_medication_status(row):
             try:
-                if pd.isna(row['CLINICAL_EFFECTIVE_DATE']) or pd.isna(row['DURATION_DAYS']):
-                    return "Unknown"
-
-                start_date = pd.to_datetime(row['CLINICAL_EFFECTIVE_DATE'])
-                duration_days = int(row['DURATION_DAYS'])
-                end_date = start_date + timedelta(days=duration_days)
                 today = datetime.now()
 
-                if today <= end_date:
-                    return "Active"
-                else:
-                    return "Expired"
+                # Check if cancelled
+                if not pd.isna(row['CANCELLATION_DATE']):
+                    cancellation_date = pd.to_datetime(row['CANCELLATION_DATE'])
+                    if cancellation_date <= today:
+                        return "Cancelled"
+
+                # Check statement expiry date
+                if not pd.isna(row['EXPIRY_DATE']):
+                    expiry_date = pd.to_datetime(row['EXPIRY_DATE'])
+                    if expiry_date < today:
+                        return "Expired"
+
+                # Check statement is_active flag
+                if not pd.isna(row['STATEMENT_IS_ACTIVE']) and row['STATEMENT_IS_ACTIVE'] == False:
+                    return "Inactive"
+
+                # Check duration-based expiry
+                if not pd.isna(row['CLINICAL_EFFECTIVE_DATE']) and not pd.isna(row['DURATION_DAYS']):
+                    start_date = pd.to_datetime(row['CLINICAL_EFFECTIVE_DATE'])
+                    duration_days = int(row['DURATION_DAYS'])
+                    end_date = start_date + timedelta(days=duration_days)
+
+                    if today <= end_date:
+                        return "Active"
+                    else:
+                        return "Expired"
+
+                return "Unknown"
             except:
                 return "Unknown"
 
@@ -94,10 +112,10 @@ def render_medications():
         # Format date for display
         display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
 
-        # Format prescription type - prefer issue_method_description, fallback to statement_issue_method
+        # Format prescription type - prefer issue_method from order, fallback to statement_issue_method
         display_df['TYPE'] = display_df.apply(
-            lambda row: safe_str(row['ISSUE_METHOD_DESCRIPTION'])
-            if row['ISSUE_METHOD_DESCRIPTION'] and row['ISSUE_METHOD_DESCRIPTION'] != 'N/A'
+            lambda row: safe_str(row['ISSUE_METHOD'])
+            if row['ISSUE_METHOD'] and row['ISSUE_METHOD'] != 'N/A'
             else safe_str(row['STATEMENT_ISSUE_METHOD']),
             axis=1
         )
@@ -131,12 +149,13 @@ def render_medications():
         display_df = display_df[[
             'DATE_DISPLAY',
             'STATUS',
+            'TYPE',
             'MAPPED_CONCEPT_DISPLAY',
             'DOSE_INFO',
             'DURATION_INFO',
             'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Status', 'Medication', 'Dose', 'Duration', 'Prescriber']
+        display_df.columns = ['Date', 'Status', 'Type', 'Medication', 'Dose', 'Duration', 'Prescriber']
 
         # Display table
         st.dataframe(
