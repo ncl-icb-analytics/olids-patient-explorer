@@ -72,7 +72,7 @@ streamlit run streamlit_app.py
 
 Database connection and configuration settings are managed in `config.py`. The application uses:
 
-- **Role**: `ISL-USERGROUP-SECONDEES-NCL`
+- **Role**: `ENGINEER`
 - **Warehouse**: `WH_NCL_ENGINEERING_XS`
 - **Schemas**:
   - `DATA_LAKE.OLIDS` for clinical data
