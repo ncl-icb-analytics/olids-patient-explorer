@@ -16,6 +16,10 @@ def render_search():
     st.markdown("### Patient Search")
     st.markdown("Search for a patient by entering their **person_id** or **sk_patient_id**")
 
+    # Initialize session state for search results
+    if 'search_results' not in st.session_state:
+        st.session_state.search_results = None
+
     # Search container
     st.markdown('<div class="search-container">', unsafe_allow_html=True)
 
@@ -41,19 +45,25 @@ def render_search():
 
             if results.empty:
                 st.warning(f"No patient found with identifier: {search_term}")
+                st.session_state.search_results = None
             else:
-                # Display results
-                st.markdown("---")
-                st.markdown("### Search Results")
-
-                for idx, row in results.iterrows():
-                    render_patient_card(row)
+                # Store results in session state
+                st.session_state.search_results = results
 
     elif search_clicked and not search_term:
         st.warning("Please enter a patient identifier to search")
+        st.session_state.search_results = None
+
+    # Display search results from session state
+    if st.session_state.search_results is not None and not st.session_state.search_results.empty:
+        st.markdown("---")
+        st.markdown("### Search Results")
+
+        for idx, row in st.session_state.search_results.iterrows():
+            render_patient_card(row)
 
     # Display instructions
-    if not search_clicked:
+    if st.session_state.search_results is None:
         st.markdown("---")
         st.markdown("#### Instructions")
         st.markdown("""

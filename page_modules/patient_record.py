@@ -18,6 +18,7 @@ def render_patient_record():
         st.warning("No patient selected. Please search for a patient first.")
         if st.button("Back to Search"):
             st.session_state.page = "search"
+            st.session_state.search_results = None
             st.rerun()
         return
 
@@ -26,6 +27,7 @@ def render_patient_record():
     # Back button
     if st.button("← Back to Search"):
         st.session_state.page = "search"
+        st.session_state.search_results = None
         st.rerun()
 
     # Load patient demographics
