@@ -115,6 +115,11 @@ CUSTOM_CSS = """
         margin: 40px auto;
     }
 
+    /* Hide form border */
+    [data-testid="stForm"] {
+        border: 0px;
+    }
+
     /* Metric cards */
     div[data-testid="metric-container"] {
         background-color: #f8f9fa;
