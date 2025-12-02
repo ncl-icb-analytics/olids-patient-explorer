@@ -3,6 +3,8 @@ Medications view page
 """
 
 import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
 from services.record_service import get_patient_medications, calculate_date_range
 from utils.helpers import format_date, safe_str, format_practitioner_name
 from config import DATE_RANGE_OPTIONS
@@ -68,7 +70,29 @@ def render_medications():
 
         # Prepare display dataframe
         display_df = medications.copy()
-        display_df['CLINICAL_EFFECTIVE_DATE'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
+
+        # Calculate medication status based on date + duration
+        def calculate_medication_status(row):
+            try:
+                if pd.isna(row['CLINICAL_EFFECTIVE_DATE']) or pd.isna(row['DURATION_DAYS']):
+                    return "Unknown"
+
+                start_date = pd.to_datetime(row['CLINICAL_EFFECTIVE_DATE'])
+                duration_days = int(row['DURATION_DAYS'])
+                end_date = start_date + timedelta(days=duration_days)
+                today = datetime.now()
+
+                if today <= end_date:
+                    return "Active"
+                else:
+                    return "Expired"
+            except:
+                return "Unknown"
+
+        display_df['STATUS'] = display_df.apply(calculate_medication_status, axis=1)
+
+        # Format date for display
+        display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
 
         # Format prescription type - prefer issue_method_description, fallback to statement_issue_method
         display_df['TYPE'] = display_df.apply(
@@ -105,14 +129,14 @@ def render_medications():
 
         # Select and rename columns for display
         display_df = display_df[[
-            'CLINICAL_EFFECTIVE_DATE',
-            'TYPE',
+            'DATE_DISPLAY',
+            'STATUS',
             'MAPPED_CONCEPT_DISPLAY',
             'DOSE_INFO',
             'DURATION_INFO',
             'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Type', 'Medication', 'Dose', 'Duration', 'Prescriber']
+        display_df.columns = ['Date', 'Status', 'Medication', 'Dose', 'Duration', 'Prescriber']
 
         # Display table
         st.dataframe(

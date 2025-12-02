@@ -131,7 +131,12 @@ def get_medication_summary(person_id):
     SELECT
         COUNT(*) as total_medications,
         MIN(clinical_effective_date) as earliest_date,
-        MAX(clinical_effective_date) as most_recent_date
+        MAX(clinical_effective_date) as most_recent_date,
+        COUNT(CASE
+            WHEN duration_days IS NOT NULL
+            AND DATEADD(day, duration_days, clinical_effective_date) >= CURRENT_DATE()
+            THEN 1
+        END) as active_medications
     FROM {TABLE_MEDICATION_ORDER}
     WHERE person_id = '{person_id}'
     """
@@ -141,6 +146,7 @@ def get_medication_summary(person_id):
         if result.empty:
             return {
                 "total_medications": 0,
+                "active_medications": 0,
                 "earliest_date": None,
                 "most_recent_date": None
             }
@@ -148,6 +154,7 @@ def get_medication_summary(person_id):
         row = result.iloc[0]
         return {
             "total_medications": int(row["TOTAL_MEDICATIONS"]),
+            "active_medications": int(row["ACTIVE_MEDICATIONS"]),
             "earliest_date": row["EARLIEST_DATE"],
             "most_recent_date": row["MOST_RECENT_DATE"]
         }
@@ -155,6 +162,7 @@ def get_medication_summary(person_id):
         st.error(f"Error loading medication summary: {str(e)}")
         return {
             "total_medications": 0,
+            "active_medications": 0,
             "earliest_date": None,
             "most_recent_date": None
         }

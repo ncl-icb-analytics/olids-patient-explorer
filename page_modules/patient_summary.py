@@ -126,7 +126,9 @@ def render_summary_metrics(obs_summary, med_summary, patient):
         st.metric("Observations", f"{obs_summary['total_observations']:,}")
 
     with col2:
-        st.metric("Medications", f"{med_summary['total_medications']:,}")
+        active_count = med_summary['active_medications']
+        total_count = med_summary['total_medications']
+        st.metric("Medications", f"{total_count:,}", delta=f"{active_count} active" if active_count > 0 else None)
 
     with col3:
         earliest_obs = obs_summary['earliest_date']
