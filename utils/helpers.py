@@ -62,6 +62,29 @@ def render_status_badge(is_active, is_deceased, inactive_reason=None):
         st.markdown(f'<span class="status-inactive">INACTIVE{reason}</span>', unsafe_allow_html=True)
 
 
+
+
+def get_status_badge_html(is_active, is_deceased, inactive_reason=None):
+    """
+    Get status badge HTML for inline display.
+
+    Args:
+        is_active: Active registration status
+        is_deceased: Deceased status
+        inactive_reason: Reason for inactive status
+
+    Returns:
+        HTML string for badge
+    """
+    if is_deceased:
+        return '<span class="status-deceased">DECEASED</span>'
+    elif is_active:
+        return '<span class="status-active">ACTIVE</span>'
+    else:
+        reason = f" - {inactive_reason}" if inactive_reason else ""
+        return f'<span class="status-inactive">INACTIVE{reason}</span>'
+
+
 def format_value_with_unit(value, unit):
     """
     Format observation value with unit.

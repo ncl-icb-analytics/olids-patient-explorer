@@ -5,7 +5,7 @@ Patient summary page - landing page when viewing a patient record
 import streamlit as st
 from services.patient_service import get_patient_demographics, get_patient_registration_history, get_patient_ltc_summary
 from services.record_service import get_observation_summary, get_medication_summary, get_appointment_summary
-from utils.helpers import render_status_badge, format_date, format_boolean, safe_str, format_month_year
+from utils.helpers import render_status_badge, get_status_badge_html, format_date, format_boolean, safe_str, format_month_year
 
 
 def render_patient_summary():
@@ -106,20 +106,16 @@ def render_patient_header(patient):
     Args:
         patient: Patient demographics row
     """
-    # Title and status - no background div
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.markdown(f"## Patient Record: {patient['PERSON_ID']}")
-        st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
-    with col2:
-        # Align badge to the right with proper vertical alignment
-        st.markdown("<div style='text-align: right; padding-top: 12px;'>", unsafe_allow_html=True)
-        render_status_badge(
-            patient['IS_ACTIVE'],
-            patient['IS_DECEASED'],
-            patient.get('INACTIVE_REASON')
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
+    # Get badge HTML
+    badge_html = get_status_badge_html(
+        patient['IS_ACTIVE'],
+        patient['IS_DECEASED'],
+        patient.get('INACTIVE_REASON')
+    )
+    
+    # Title with inline status badge
+    st.markdown(f"## Patient Record: {patient['PERSON_ID']} {badge_html}", unsafe_allow_html=True)
+    st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
 
 
 def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
