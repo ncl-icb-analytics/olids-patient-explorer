@@ -159,11 +159,12 @@ def render_summary_metrics(obs_summary, med_summary, patient):
 def render_core_demographics(patient):
     """Render core demographics section."""
     # Row 1: Personal demographics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("**Age**")
-        st.markdown(f"{safe_str(patient['AGE'])} years")
+        life_stage = safe_str(patient['AGE_LIFE_STAGE'])
+        st.markdown(f"{safe_str(patient['AGE'])} years ({life_stage})")
         birth_date = format_month_year(patient['BIRTH_DATE_APPROX'])
         st.markdown(f"<small>Born: {birth_date}</small>", unsafe_allow_html=True)
 
@@ -175,10 +176,6 @@ def render_core_demographics(patient):
         st.markdown("**Ethnicity**")
         st.markdown(safe_str(patient['ETHNICITY_SUBCATEGORY']))
         st.markdown(f"<small>{safe_str(patient['ETHNICITY_CATEGORY'])}</small>", unsafe_allow_html=True)
-
-    with col4:
-        st.markdown("**Life Stage**")
-        st.markdown(safe_str(patient['AGE_LIFE_STAGE']))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
