@@ -4,7 +4,7 @@ Patient summary page - landing page when viewing a patient record
 
 import streamlit as st
 from services.patient_service import get_patient_demographics, get_patient_registration_history, get_patient_ltc_summary
-from services.record_service import get_observation_summary, get_medication_summary
+from services.record_service import get_observation_summary, get_medication_summary, get_appointment_summary
 from utils.helpers import render_status_badge, format_date, format_boolean, safe_str, format_month_year
 
 
@@ -40,20 +40,21 @@ def render_patient_summary():
 
         patient = demographics.iloc[0]
 
-        # Get observation and medication summaries
+        # Get observation, medication, and appointment summaries
         obs_summary = get_observation_summary(person_id)
         med_summary = get_medication_summary(person_id)
+        appt_summary = get_appointment_summary(person_id)
 
     # Render patient header
     render_patient_header(patient)
 
     # Render summary metrics
-    render_summary_metrics(obs_summary, med_summary, patient)
+    render_summary_metrics(obs_summary, med_summary, appt_summary, patient)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Navigation buttons to different views
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         if st.button("📊 View Observations", use_container_width=True, type="primary"):
@@ -63,6 +64,11 @@ def render_patient_summary():
     with col2:
         if st.button("💊 View Medications", use_container_width=True, type="primary"):
             st.session_state.page = "medications"
+            st.rerun()
+
+    with col3:
+        if st.button("📅 View Appointments", use_container_width=True, type="primary"):
+            st.session_state.page = "appointments"
             st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -116,18 +122,19 @@ def render_patient_header(patient):
         st.markdown("</div>", unsafe_allow_html=True)
 
 
-def render_summary_metrics(obs_summary, med_summary, patient):
+def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
     """
     Render summary metrics.
 
     Args:
         obs_summary: Observation summary dictionary
         med_summary: Medication summary dictionary
+        appt_summary: Appointment summary dictionary
         patient: Patient demographics row
     """
     st.markdown("### Record Summary")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
 
     with col1:
         st.metric("Observations", f"{obs_summary['total_observations']:,}")
@@ -138,20 +145,25 @@ def render_summary_metrics(obs_summary, med_summary, patient):
         st.metric("Medications", f"{active_count} / {total_count:,}")
 
     with col3:
+        st.metric("Appointments", f"{appt_summary['total_appointments']:,}")
+
+    with col4:
         earliest_obs = obs_summary['earliest_date']
         earliest_med = med_summary['earliest_date']
-        earliest = min(filter(None, [earliest_obs, earliest_med]), default=None)
+        earliest_appt = appt_summary['earliest_date']
+        earliest = min(filter(None, [earliest_obs, earliest_med, earliest_appt]), default=None)
         earliest_str = format_date(earliest) if earliest else "N/A"
         st.metric("Earliest Record", earliest_str)
 
-    with col4:
+    with col5:
         most_recent_obs = obs_summary['most_recent_date']
         most_recent_med = med_summary['most_recent_date']
-        most_recent = max(filter(None, [most_recent_obs, most_recent_med]), default=None)
+        most_recent_appt = appt_summary['most_recent_date']
+        most_recent = max(filter(None, [most_recent_obs, most_recent_med, most_recent_appt]), default=None)
         most_recent_str = format_date(most_recent) if most_recent else "N/A"
         st.metric("Most Recent", most_recent_str)
 
-    with col5:
+    with col6:
         status = "Active" if patient['IS_ACTIVE'] else "Inactive"
         st.metric("Status", status)
 

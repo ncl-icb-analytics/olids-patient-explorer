@@ -41,6 +41,9 @@ def main():
     elif st.session_state.page == 'medications':
         from page_modules.medications import render_medications
         render_medications()
+    elif st.session_state.page == 'appointments':
+        from page_modules.appointments import render_appointments
+        render_appointments()
     else:
         # Default to search page
         st.session_state.page = 'search'

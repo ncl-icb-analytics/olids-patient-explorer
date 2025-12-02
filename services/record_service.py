@@ -265,3 +265,107 @@ def calculate_date_range(range_option):
     date_from = date_to - timedelta(days=days)
 
     return date_from, date_to
+
+
+def get_appointment_summary(person_id):
+    """
+    Get summary statistics for patient appointments.
+
+    Args:
+        person_id: Patient identifier
+
+    Returns:
+        Dictionary with summary stats
+    """
+    from config import TABLE_APPOINTMENT
+    conn = get_connection()
+
+    query = f"""
+    SELECT
+        COUNT(*) as total_appointments,
+        MIN(start_date) as earliest_date,
+        MAX(start_date) as most_recent_date
+    FROM {TABLE_APPOINTMENT}
+    WHERE person_id = '{person_id}'
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        if result.empty:
+            return {
+                "total_appointments": 0,
+                "earliest_date": None,
+                "most_recent_date": None
+            }
+
+        row = result.iloc[0]
+        return {
+            "total_appointments": int(row["TOTAL_APPOINTMENTS"]),
+            "earliest_date": row["EARLIEST_DATE"],
+            "most_recent_date": row["MOST_RECENT_DATE"]
+        }
+    except Exception as e:
+        st.error(f"Error loading appointment summary: {str(e)}")
+        return {
+            "total_appointments": 0,
+            "earliest_date": None,
+            "most_recent_date": None
+        }
+
+
+def get_patient_appointments(person_id, date_from=None, date_to=None):
+    """
+    Get appointments for a patient with optional filters.
+
+    Args:
+        person_id: Patient identifier
+        date_from: Start date filter (optional)
+        date_to: End date filter (optional)
+
+    Returns:
+        DataFrame with appointments
+    """
+    from config import TABLE_APPOINTMENT, TABLE_APPOINTMENT_PRACTITIONER, TABLE_PRACTITIONER, MAX_OBSERVATIONS
+    conn = get_connection()
+
+    # Build WHERE clause
+    where_clauses = [f"a.person_id = '{person_id}'"]
+
+    if date_from:
+        where_clauses.append(f"a.start_date >= '{date_from}'")
+
+    if date_to:
+        where_clauses.append(f"a.start_date <= '{date_to}'")
+
+    where_sql = " AND ".join(where_clauses)
+
+    query = f"""
+    SELECT
+        a.start_date,
+        a.type,
+        a.appointment_status_concept_id,
+        a.national_slot_category_name,
+        a.contact_mode_concept_id,
+        a.planned_duration,
+        a.actual_duration,
+        a.patient_wait,
+        p.last_name as practitioner_last_name,
+        p.first_name as practitioner_first_name,
+        p.title as practitioner_title,
+        a.id
+    FROM {TABLE_APPOINTMENT} a
+    LEFT JOIN {TABLE_APPOINTMENT_PRACTITIONER} ap
+        ON a.id = ap.appointment_id
+    LEFT JOIN {TABLE_PRACTITIONER} p
+        ON ap.practitioner_id = p.id
+    WHERE {where_sql}
+    ORDER BY a.start_date DESC
+    LIMIT {MAX_OBSERVATIONS}
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        return result
+    except Exception as e:
+        st.error(f"Error loading appointments: {str(e)}")
+        return pd.DataFrame()
