@@ -112,11 +112,11 @@ def render_medications():
         # Format date for display
         display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
 
-        # Format prescription type - prefer issue_method from order, fallback to statement_issue_method
+        # Format prescription type - use statement_issue_method as primary source
         display_df['TYPE'] = display_df.apply(
-            lambda row: safe_str(row['ISSUE_METHOD'])
-            if row['ISSUE_METHOD'] and row['ISSUE_METHOD'] != 'N/A'
-            else safe_str(row['STATEMENT_ISSUE_METHOD']),
+            lambda row: safe_str(row['STATEMENT_ISSUE_METHOD'])
+            if row['STATEMENT_ISSUE_METHOD'] and row['STATEMENT_ISSUE_METHOD'] != 'N/A'
+            else safe_str(row['ISSUE_METHOD']),
             axis=1
         )
 
