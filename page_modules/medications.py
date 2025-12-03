@@ -66,7 +66,7 @@ def render_medications():
     if medications.empty:
         st.info("No medications found for the selected filters")
     else:
-        st.markdown(f"**Showing {len(medications):,} medications** (limited to 1,000 most recent)")
+        st.markdown(f"**Showing {len(medications):,} medications** (limited to 10,000 most recent)")
 
         # Prepare display dataframe
         display_df = medications.copy()

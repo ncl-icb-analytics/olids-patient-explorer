@@ -320,7 +320,7 @@ def render_observations_section(person_id):
     if observations.empty:
         st.info("No observations found for the selected filters")
     else:
-        st.markdown(f"**Showing {len(observations):,} observations** (limited to 1,000 most recent)")
+        st.markdown(f"**Showing {len(observations):,} observations** (limited to 10,000 most recent)")
 
         # Prepare display dataframe
         display_df = observations.copy()
