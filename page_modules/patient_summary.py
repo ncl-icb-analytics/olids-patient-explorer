@@ -81,6 +81,8 @@ def render_patient_summary():
 
     with tab2:
         render_registration_info(patient)
+        st.markdown("<br>", unsafe_allow_html=True)
+        render_registration_history(person_id)
 
     with tab3:
         render_geography_info(patient)
@@ -92,11 +94,6 @@ def render_patient_summary():
 
     # Long-term conditions summary
     render_ltc_summary(person_id)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Registration history (optional expandable section)
-    render_registration_history(person_id)
 
 
 def render_patient_header(patient):
@@ -279,49 +276,73 @@ def render_language_info(patient):
 
 def render_registration_history(person_id):
     """
-    Render registration history expandable section.
+    Render registration history summary and details.
 
     Args:
         person_id: Patient identifier
     """
-    with st.expander("📜 Registration History", expanded=False):
-        history = get_patient_registration_history(person_id)
+    history = get_patient_registration_history(person_id)
 
-        if history.empty:
-            st.info("No registration history available")
-        else:
-            st.markdown(f"**{len(history)} registration periods found**")
-            st.markdown("<br>", unsafe_allow_html=True)
+    if history.empty:
+        st.info("No registration history available")
+        return
 
-            for idx, row in history.iterrows():
-                current_badge = " 🟢 **CURRENT**" if row['IS_CURRENT'] else ""
-                active_status = "Active" if row['IS_ACTIVE'] else "Inactive"
+    # Summary section - show key stats
+    st.markdown("### Registration History Summary")
+    
+    total_periods = len(history)
+    current_period = history[history['IS_CURRENT'] == True]
+    has_current = not current_period.empty
+    
+    if has_current:
+        current_row = current_period.iloc[0]
+        reg_start = format_date(current_row['REGISTRATION_START_DATE'])
+        effective_start = format_date(current_row['EFFECTIVE_START_DATE'])
+    else:
+        reg_start = "N/A"
+        effective_start = "N/A"
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Periods", total_periods)
+    with col2:
+        st.metric("Registration Start", reg_start)
+    with col3:
+        st.metric("Current Period Start", effective_start)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Detailed history in expandable section
+    with st.expander(f"📜 View All {total_periods} Registration Periods", expanded=False):
+        for idx, row in history.iterrows():
+            current_badge = " 🟢 **CURRENT**" if row['IS_CURRENT'] else ""
+            active_status = "Active" if row['IS_ACTIVE'] else "Inactive"
 
-                st.markdown(f"#### Period {row['PERIOD_SEQUENCE']}{current_badge}")
+            st.markdown(f"#### Period {row['PERIOD_SEQUENCE']}{current_badge}")
 
-                col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
 
-                with col1:
-                    st.markdown(f"**Effective Dates**")
-                    st.markdown(f"Start: {format_date(row['EFFECTIVE_START_DATE'])}")
-                    st.markdown(f"End: {format_date(row['EFFECTIVE_END_DATE'])}")
+            with col1:
+                st.markdown(f"**Effective Dates**")
+                st.markdown(f"Start: {format_date(row['EFFECTIVE_START_DATE'])}")
+                st.markdown(f"End: {format_date(row['EFFECTIVE_END_DATE'])}")
 
-                    st.markdown(f"<br>**Registration**", unsafe_allow_html=True)
-                    st.markdown(f"Start: {format_date(row['REGISTRATION_START_DATE'])}")
-                    st.markdown(f"End: {format_date(row['REGISTRATION_END_DATE'])}")
-                    st.markdown(f"Status: {active_status}")
+                st.markdown(f"<br>**Registration**", unsafe_allow_html=True)
+                st.markdown(f"Start: {format_date(row['REGISTRATION_START_DATE'])}")
+                st.markdown(f"End: {format_date(row['REGISTRATION_END_DATE'])}")
+                st.markdown(f"Status: {active_status}")
 
-                with col2:
-                    st.markdown(f"**Practice**")
-                    st.markdown(f"{safe_str(row['PRACTICE_NAME'])}")
-                    st.markdown(f"<small>Code: {safe_str(row['PRACTICE_CODE'])}</small>", unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"**Practice**")
+                st.markdown(f"{safe_str(row['PRACTICE_NAME'])}")
+                st.markdown(f"<small>Code: {safe_str(row['PRACTICE_CODE'])}</small>", unsafe_allow_html=True)
 
-                    st.markdown(f"<br>**Location**", unsafe_allow_html=True)
-                    st.markdown(f"PCN: {safe_str(row['PCN_NAME'])}")
-                    st.markdown(f"Borough: {safe_str(row['BOROUGH_REGISTERED'])}")
+                st.markdown(f"<br>**Location**", unsafe_allow_html=True)
+                st.markdown(f"PCN: {safe_str(row['PCN_NAME'])}")
+                st.markdown(f"Borough: {safe_str(row['BOROUGH_REGISTERED'])}")
 
-                if idx < len(history) - 1:
-                    st.markdown("---")
+            if idx < len(history) - 1:
+                st.markdown("---")
 
 
 def render_ltc_summary(person_id):
