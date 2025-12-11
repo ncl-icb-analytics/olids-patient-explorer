@@ -405,3 +405,49 @@ def get_patient_appointments(person_id, date_from=None, date_to=None, include_fu
     except Exception as e:
         st.error(f"Error loading appointments: {str(e)}")
         return pd.DataFrame()
+
+
+def get_patient_problems(person_id):
+    """
+    Get active and past problems for a patient from observations table.
+
+    Args:
+        person_id: Patient identifier
+
+    Returns:
+        DataFrame with problems including episodicity
+    """
+    conn = get_connection()
+
+    query = f"""
+    SELECT
+        o.clinical_effective_date,
+        o.mapped_concept_code,
+        o.mapped_concept_display,
+        o.is_problem,
+        o.is_problem_deleted,
+        COALESCE(episodicity_concept.display, o.episodicity_concept_id) as episodicity,
+        p.last_name as practitioner_last_name,
+        p.first_name as practitioner_first_name,
+        p.title as practitioner_title,
+        o.id
+    FROM {TABLE_OBSERVATION} o
+    LEFT JOIN {TABLE_PRACTITIONER} p
+        ON o.practitioner_id = p.id
+    LEFT JOIN {TABLE_CONCEPT_MAP} episodicity_map
+        ON o.episodicity_concept_id = episodicity_map.source_code_id
+        AND episodicity_map.is_primary = TRUE
+    LEFT JOIN {TABLE_CONCEPT} episodicity_concept
+        ON episodicity_map.target_code_id = episodicity_concept.id
+    WHERE o.person_id = '{person_id}'
+        AND o.is_problem = TRUE
+    ORDER BY o.clinical_effective_date DESC
+    LIMIT {MAX_OBSERVATIONS}
+    """
+
+    try:
+        result = conn.sql(query).to_pandas()
+        return result
+    except Exception as e:
+        st.error(f"Error loading problems: {str(e)}")
+        return pd.DataFrame()
