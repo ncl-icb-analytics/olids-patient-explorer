@@ -324,8 +324,7 @@ def render_registration_history(person_id):
     
     # Base chart for bars
     bars = alt.Chart(chart_df).mark_bar(
-        cornerRadiusTop=3,
-        cornerRadiusBottom=3
+        cornerRadius=3
     ).encode(
         x=alt.X('start_date:T', title='Date', axis=alt.Axis(format='%Y-%m')),
         x2='end_date:T',
