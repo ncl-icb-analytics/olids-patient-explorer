@@ -299,27 +299,33 @@ def render_registration_history(person_id):
     
     # Display as bullet points
     for idx, row in history.iterrows():
-        current_indicator = " 🟢 **CURRENT**" if row['IS_CURRENT'] else ""
         effective_start = format_date(row['EFFECTIVE_START_DATE'])
-        effective_end = format_date(row['EFFECTIVE_END_DATE'])
+        
+        # Handle end date - check for NaT/None properly
+        end_date = row['EFFECTIVE_END_DATE']
+        if pd.isna(end_date) or end_date is None:
+            effective_end = "Ongoing"
+        else:
+            effective_end = format_date(end_date)
+            if effective_end == "N/A":
+                effective_end = "Ongoing"
+        
         practice_name = safe_str(row['PRACTICE_NAME'])
         practice_code = safe_str(row['PRACTICE_CODE'])
         
         # Build the bullet point text
-        bullet_text = f"**Period {row['PERIOD_SEQUENCE']}**{current_indicator}: "
-        bullet_text += f"{effective_start}"
-        
-        if effective_end and effective_end != "N/A":
-            bullet_text += f" → {effective_end}"
-        else:
-            bullet_text += " → Ongoing"
-        
+        bullet_text = f"**Period {row['PERIOD_SEQUENCE']}**: "
+        bullet_text += f"{effective_start} → {effective_end}"
         bullet_text += f" | {practice_name}"
         
         if practice_code and practice_code != "N/A":
             bullet_text += f" ({practice_code})"
         
-        st.markdown(f"- {bullet_text}")
+        # Add current badge at the end if current
+        if row['IS_CURRENT']:
+            bullet_text += ' <span style="background-color: #28a745; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 600;">CURRENT</span>'
+        
+        st.markdown(f"- {bullet_text}", unsafe_allow_html=True)
     
     st.caption(f"Showing {total_periods} registration period(s)")
     st.markdown("<br>", unsafe_allow_html=True)
