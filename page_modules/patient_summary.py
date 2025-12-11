@@ -279,7 +279,7 @@ def render_language_info(patient):
 
 def render_registration_history(person_id):
     """
-    Render registration history as a timeline chart and details.
+    Render registration history as a markdown list.
 
     Args:
         person_id: Patient identifier
@@ -292,80 +292,34 @@ def render_registration_history(person_id):
 
     total_periods = len(history)
     
-    # Prepare data for timeline chart
-    chart_data = []
-    for idx, row in history.iterrows():
-        start_date = pd.to_datetime(row['EFFECTIVE_START_DATE'])
-        end_date = pd.to_datetime(row['EFFECTIVE_END_DATE']) if pd.notna(row['EFFECTIVE_END_DATE']) else datetime.now()
-        
-        chart_data.append({
-            'period': f"Period {row['PERIOD_SEQUENCE']}",
-            'practice': safe_str(row['PRACTICE_NAME']),
-            'start_date': start_date,
-            'end_date': end_date,
-            'is_current': 'Current' if row['IS_CURRENT'] else 'Past',
-            'is_active': row['IS_ACTIVE'],
-            'practice_code': safe_str(row['PRACTICE_CODE']),
-            'pcn': safe_str(row['PCN_NAME']),
-            'period_seq': row['PERIOD_SEQUENCE']
-        })
-    
-    chart_df = pd.DataFrame(chart_data)
     # Sort by period sequence descending (most recent first)
-    chart_df = chart_df.sort_values('period_seq', ascending=False)
-    chart_df['row_num'] = range(len(chart_df))
+    history = history.sort_values('PERIOD_SEQUENCE', ascending=False)
     
-    # Create timeline chart
-    st.markdown("### Registration Timeline")
+    st.markdown("### Registration History")
     
-    # Create timeline with bars - each period gets its own row, sorted by period sequence
-    bars = alt.Chart(chart_df).mark_bar(
-        opacity=0.8,
-        strokeWidth=1
-    ).encode(
-        x=alt.X('start_date:T', title='Date'),
-        x2='end_date:T',
-        y=alt.Y('period:N', title='', sort=alt.SortField(field='period_seq', order='descending')),
-        color=alt.Color(
-            'is_current:N',
-            scale=alt.Scale(
-                domain=['Current', 'Past'],
-                range=['#28a745', '#6c757d']
-            ),
-            legend=alt.Legend(title="Status")
-        ),
-        tooltip=[
-            alt.Tooltip('period:N', title='Period'),
-            alt.Tooltip('practice:N', title='Practice'),
-            alt.Tooltip('practice_code:N', title='Code'),
-            alt.Tooltip('pcn:N', title='PCN'),
-            alt.Tooltip('start_date:T', title='Start', format='%d %b %Y'),
-            alt.Tooltip('end_date:T', title='End', format='%d %b %Y')
-        ]
-    ).properties(
-        height=max(300, len(chart_df) * 60),
-        width="container"
-    )
-    
-    # Add practice labels on the bars
-    practice_labels = alt.Chart(chart_df).mark_text(
-        align='left',
-        baseline='middle',
-        dx=5,
-        fontSize=10
-    ).encode(
-        x='start_date:T',
-        y=alt.Y('period:N', sort=alt.SortField(field='period_seq', order='descending')),
-        text=alt.Text('practice:N')
-    )
-    
-    timeline_chart = (bars + practice_labels).configure_view(
-        strokeWidth=0
-    ).configure_axis(
-        grid=False
-    )
-    
-    st.altair_chart(timeline_chart, use_container_width=True)
+    # Display as bullet points
+    for idx, row in history.iterrows():
+        current_indicator = " 🟢 **CURRENT**" if row['IS_CURRENT'] else ""
+        effective_start = format_date(row['EFFECTIVE_START_DATE'])
+        effective_end = format_date(row['EFFECTIVE_END_DATE'])
+        practice_name = safe_str(row['PRACTICE_NAME'])
+        practice_code = safe_str(row['PRACTICE_CODE'])
+        
+        # Build the bullet point text
+        bullet_text = f"**Period {row['PERIOD_SEQUENCE']}**{current_indicator}: "
+        bullet_text += f"{effective_start}"
+        
+        if effective_end and effective_end != "N/A":
+            bullet_text += f" → {effective_end}"
+        else:
+            bullet_text += " → Ongoing"
+        
+        bullet_text += f" | {practice_name}"
+        
+        if practice_code and practice_code != "N/A":
+            bullet_text += f" ({practice_code})"
+        
+        st.markdown(f"- {bullet_text}")
     
     st.caption(f"Showing {total_periods} registration period(s)")
     st.markdown("<br>", unsafe_allow_html=True)
