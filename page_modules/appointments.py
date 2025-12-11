@@ -5,6 +5,7 @@ Appointments view page
 import streamlit as st
 import pandas as pd
 import altair as alt
+from datetime import datetime
 from services.record_service import get_patient_appointments, calculate_date_range
 from utils.helpers import format_date, safe_str, format_practitioner_name
 from config import DATE_RANGE_OPTIONS
@@ -110,15 +111,65 @@ def render_appointments():
             # Visualization Section
             st.markdown("#### Trends")
             
-            # Create a sortable date column for proper chronological ordering
+            # Determine date range for placeholder months
+            if date_from and date_to:
+                # Use selected date range
+                chart_start = pd.to_datetime(date_from).to_period("M").to_timestamp()
+                chart_end = pd.to_datetime(date_to).to_period("M").to_timestamp()
+            elif date_from:
+                # Use date_from to today
+                chart_start = pd.to_datetime(date_from).to_period("M").to_timestamp()
+                chart_end = datetime.now().to_period("M").to_timestamp()
+            else:
+                # Use data range
+                chart_start = past_df["START_DATE"].min().to_period("M").to_timestamp()
+                chart_end = past_df["START_DATE"].max().to_period("M").to_timestamp()
+            
+            # Generate all months in range
+            all_months = []
+            current = chart_start
+            while current <= chart_end:
+                year_month = current.strftime("%Y-%b")
+                all_months.append({
+                    'YEAR_MONTH': year_month,
+                    'SORT_DATE': current
+                })
+                # Move to next month
+                current = (current.to_period("M") + 1).to_timestamp()
+            
+            all_months_df = pd.DataFrame(all_months)
+            
+            # Create sortable date column
             past_df["SORT_DATE"] = past_df["START_DATE"].dt.to_period("M").dt.to_timestamp()
+            
+            # Get all unique statuses and slot categories
+            all_statuses = past_df["STATUS_DISPLAY"].unique()
+            all_slot_categories = past_df["SLOT_CATEGORY"].unique()
             
             # Group by month and status
             status_counts = past_df.groupby(["YEAR_MONTH", "STATUS_DISPLAY", "SORT_DATE"]).size().reset_index(name="COUNT")
-            status_counts = status_counts.sort_values("SORT_DATE")
+            
+            # Create complete status counts with placeholder months
+            status_complete = []
+            for _, month_row in all_months_df.iterrows():
+                for status in all_statuses:
+                    matching = status_counts[
+                        (status_counts["YEAR_MONTH"] == month_row["YEAR_MONTH"]) &
+                        (status_counts["STATUS_DISPLAY"] == status)
+                    ]
+                    count = matching["COUNT"].iloc[0] if not matching.empty else 0
+                    status_complete.append({
+                        'YEAR_MONTH': month_row["YEAR_MONTH"],
+                        'STATUS_DISPLAY': status,
+                        'SORT_DATE': month_row["SORT_DATE"],
+                        'COUNT': count
+                    })
+            
+            status_counts_complete = pd.DataFrame(status_complete)
+            status_counts_complete = status_counts_complete.sort_values("SORT_DATE")
             
             # Create timeline chart colored by status using Altair
-            status_chart = alt.Chart(status_counts).mark_bar().encode(
+            status_chart = alt.Chart(status_counts_complete).mark_bar().encode(
                 x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45), sort=alt.SortField(field="SORT_DATE", order="ascending")),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
                 color=alt.Color("STATUS_DISPLAY:N", title="Status", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
@@ -135,9 +186,27 @@ def render_appointments():
             
             # Second chart: by slot category
             slot_counts = past_df.groupby(["YEAR_MONTH", "SLOT_CATEGORY", "SORT_DATE"]).size().reset_index(name="COUNT")
-            slot_counts = slot_counts.sort_values("SORT_DATE")
             
-            slot_chart = alt.Chart(slot_counts).mark_bar().encode(
+            # Create complete slot counts with placeholder months
+            slot_complete = []
+            for _, month_row in all_months_df.iterrows():
+                for category in all_slot_categories:
+                    matching = slot_counts[
+                        (slot_counts["YEAR_MONTH"] == month_row["YEAR_MONTH"]) &
+                        (slot_counts["SLOT_CATEGORY"] == category)
+                    ]
+                    count = matching["COUNT"].iloc[0] if not matching.empty else 0
+                    slot_complete.append({
+                        'YEAR_MONTH': month_row["YEAR_MONTH"],
+                        'SLOT_CATEGORY': category,
+                        'SORT_DATE': month_row["SORT_DATE"],
+                        'COUNT': count
+                    })
+            
+            slot_counts_complete = pd.DataFrame(slot_complete)
+            slot_counts_complete = slot_counts_complete.sort_values("SORT_DATE")
+            
+            slot_chart = alt.Chart(slot_counts_complete).mark_bar().encode(
                 x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45), sort=alt.SortField(field="SORT_DATE", order="ascending")),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
                 color=alt.Color("SLOT_CATEGORY:N", title="Slot Category", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
