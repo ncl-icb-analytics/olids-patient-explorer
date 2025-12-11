@@ -1,20 +1,32 @@
 # OLIDS Patient Record Explorer
 
-Streamlit application for exploring individual patient records from OLIDS data, providing an EHR-style view of patient observations and demographics.
+Streamlit application for exploring individual patient records from OLIDS data, providing an EHR-style view of patient clinical records and demographics.
 
 ## Features
 
-- **Patient Search**: Universal search by `sk_patient_id` or `person_id`
-- **Comprehensive Demographics**: View detailed patient information including:
+- **Patient Search**: Universal search by `sk_patient_id` (primary) or `person_id` with inline status badges
+- **Patient Summary**: Comprehensive overview including:
+  - Record summary metrics (observations, medications, appointments)
   - Core demographics (age, gender, ethnicity, life stage)
-  - Registration history (practice, PCN, ICB)
-  - Geographic information (borough, deprivation indices)
+  - Registration history timeline with effective dates
+  - Geographic information (borough, deprivation indices, LSOA, ward)
   - Language and interpreter requirements
-- **Registration History**: Track changes in practice registrations over time
-- **Observations**: Browse patient observations with filtering by:
-  - Date range (last 30/90/365 days, all time)
+  - Long-term conditions summary
+  - Problems (Active & Past) - lazy loaded
+- **Observations**: Browse patient observations with:
+  - Date range filtering (Last 12 months, All time)
   - SNOMED code or description search
-  - Displays values with units, sorted by most recent first
+  - Problem flag and episodicity display
+  - Values with units, sorted by most recent first
+- **Medications**: Split into Current and Past sections:
+  - Current medications: All active medications (no date filter)
+  - Past medications: Filtered by date range (90 days, 1 year, All)
+  - Uses `issue_method_description` and `authorisation_type_display` from proper table joins
+- **Appointments**: View appointments with:
+  - Upcoming appointments (always shown)
+  - Past appointments with date range filtering
+  - Interactive timeline charts showing trends by status and slot category
+  - Placeholder months for periods without activity
 
 ## Project Structure
 
@@ -27,11 +39,15 @@ olids-patient-explorer/
 │
 ├── services/                     # Data access layer
 │   ├── patient_service.py        # Patient search & demographics
-│   └── record_service.py         # Observations queries
+│   └── record_service.py         # Observations, medications, appointments, problems
 │
 ├── page_modules/                 # Page implementations
 │   ├── search.py                 # Patient search page
-│   └── patient_record.py         # EHR-style record view
+│   ├── patient_summary.py        # Patient summary/dashboard
+│   ├── observations.py           # Observations view
+│   ├── medications.py            # Medications view (Current/Past)
+│   ├── appointments.py           # Appointments view with charts
+│   └── patient_record.py         # Legacy record view
 │
 └── utils/                        # Helper functions
     └── helpers.py                # Formatting utilities
@@ -41,11 +57,22 @@ olids-patient-explorer/
 
 ### Tables Used
 
-- `MODELLING.DBT_STAGING.STG_OLIDS_OBSERVATION`: Patient observations (deduplicated and tested)
-- `MODELLING.DBT_STAGING.STG_OLIDS_PERSON`: Person records (deduplicated and tested)
-- `MODELLING.DBT_STAGING.STG_OLIDS_MEDICATION_ORDER`: Medication orders (deduplicated and tested)
-- `REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS`: Current patient demographics
-- `REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS_HISTORICAL`: Historical demographic changes (SCD-2)
+**Staging Tables** (`MODELLING.DBT_STAGING`):
+- `STG_OLIDS_OBSERVATION`: Patient observations with problem flags and episodicity
+- `STG_OLIDS_MEDICATION_ORDER`: Medication orders with `issue_method_description`
+- `STG_OLIDS_MEDICATION_STATEMENT`: Medication statements with `authorisation_type_display`
+- `STG_OLIDS_APPOINTMENT`: Appointment records
+- `STG_OLIDS_APPOINTMENT_PRACTITIONER`: Appointment-practitioner relationships
+- `STG_OLIDS_PRACTITIONER`: Practitioner information
+- `STG_OLIDS_CONCEPT`: Concept definitions
+- `STG_OLIDS_CONCEPT_MAP`: Concept mappings for lookups
+
+**Demographics Tables** (`REPORTING.OLIDS_PERSON_DEMOGRAPHICS`):
+- `DIM_PERSON_DEMOGRAPHICS`: Current patient demographics
+- `DIM_PERSON_DEMOGRAPHICS_HISTORICAL`: Historical demographic changes (SCD-2)
+
+**Disease Registers** (`REPORTING.OLIDS_DISEASE_REGISTERS`):
+- `FCT_PERSON_LTC_SUMMARY`: Long-term conditions summary
 
 The staging tables mirror the source data but have data quality tests and deduplication applied.
 
