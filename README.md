@@ -103,11 +103,12 @@ streamlit run streamlit_app.py
 
 Database connection and configuration settings are managed in `config.py`. The application uses:
 
-- **Role**: `ENGINEER`
+- **Role**: `APP_ADMIN`
 - **Warehouse**: `WH_NCL_ENGINEERING_XS`
 - **Schemas**:
   - `MODELLING.DBT_STAGING` for staging clinical data
   - `REPORTING.OLIDS_PERSON_DEMOGRAPHICS` for demographics
+  - `REPORTING.OLIDS_DISEASE_REGISTERS` for long-term conditions
 
 ## Privacy Considerations
 

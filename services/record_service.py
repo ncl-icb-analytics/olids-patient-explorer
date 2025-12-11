@@ -304,7 +304,7 @@ def get_appointment_summary(person_id):
     SELECT
         COUNT(*) as total_appointments,
         MIN(start_date) as earliest_date,
-        MAX(start_date) as most_recent_date,
+        MAX(CASE WHEN start_date < CURRENT_TIMESTAMP() THEN start_date END) as most_recent_date,
         COUNT(CASE
             WHEN start_date >= DATEADD(month, -12, CURRENT_DATE())
             THEN 1
