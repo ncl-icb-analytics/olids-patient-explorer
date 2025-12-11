@@ -23,7 +23,15 @@ def render_appointments():
             st.rerun()
         return
 
-    person_id = st.session_state.selected_patient
+    sk_patient_id = st.session_state.selected_patient
+
+    # Get person_id from sk_patient_id for queries
+    from services.patient_service import get_patient_demographics
+    demographics = get_patient_demographics(sk_patient_id)
+    if demographics.empty:
+        st.error("Failed to load patient demographics")
+        return
+    person_id = demographics.iloc[0]['PERSON_ID']
 
     # Navigation buttons
     col1, col2, col3 = st.columns([1, 1, 4])
@@ -37,7 +45,7 @@ def render_appointments():
             st.session_state.search_results = None
             st.rerun()
 
-    st.markdown(f"## Appointments for Patient: {person_id}")
+    st.markdown(f"## Appointments for Patient: {sk_patient_id}")
 
     # Load all appointments (future appointments always shown, no date filter)
     with st.spinner("Loading appointments..."):
@@ -119,7 +127,7 @@ def render_appointments():
             elif date_from:
                 # Use date_from to today
                 chart_start = pd.to_datetime(date_from).to_period("M").to_timestamp()
-                chart_end = datetime.now().to_period("M").to_timestamp()
+                chart_end = pd.to_datetime(datetime.now()).to_period("M").to_timestamp()
             else:
                 # Use data range
                 chart_start = past_df["START_DATE"].min().to_period("M").to_timestamp()

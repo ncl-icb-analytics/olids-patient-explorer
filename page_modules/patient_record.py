@@ -23,7 +23,7 @@ def render_patient_record():
             st.rerun()
         return
 
-    person_id = st.session_state.selected_patient
+    sk_patient_id = st.session_state.selected_patient
 
     # Back button
     if st.button("← Back to Search"):
@@ -32,13 +32,14 @@ def render_patient_record():
         st.rerun()
 
     # Load patient demographics
-    demographics = get_patient_demographics(person_id)
+    demographics = get_patient_demographics(sk_patient_id)
 
     if demographics.empty:
         st.error("Failed to load patient demographics")
         return
 
     patient = demographics.iloc[0]
+    person_id = patient['PERSON_ID']  # Get person_id for queries
 
     # Render patient header
     render_patient_header(patient)
@@ -50,7 +51,7 @@ def render_patient_record():
     render_summary_metrics(summary, patient)
 
     # Registration history (optional expandable section)
-    render_registration_history(person_id)
+    render_registration_history(sk_patient_id)
 
     # Render observations section
     render_observations_section(person_id)
@@ -68,8 +69,8 @@ def render_patient_header(patient):
     # Title and status
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown(f"## Patient Record: {patient['PERSON_ID']}")
-        st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
+        st.markdown(f"## Patient Record: {patient['SK_PATIENT_ID']}")
+        st.markdown(f"**Person ID:** {patient['PERSON_ID']}")
     with col2:
         render_status_badge(
             patient['IS_ACTIVE'],
@@ -236,15 +237,15 @@ def render_summary_metrics(summary, patient):
         st.metric("Registration Status", status)
 
 
-def render_registration_history(person_id):
+def render_registration_history(sk_patient_id):
     """
     Render registration history expandable section.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
     """
     with st.expander("📜 Registration History", expanded=False):
-        history = get_patient_registration_history(person_id)
+        history = get_patient_registration_history(sk_patient_id)
 
         if history.empty:
             st.info("No registration history available")

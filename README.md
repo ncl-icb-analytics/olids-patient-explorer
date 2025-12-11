@@ -4,7 +4,7 @@ Streamlit application for exploring individual patient records from OLIDS data, 
 
 ## Features
 
-- **Patient Search**: Universal search by `person_id` or `sk_patient_id`
+- **Patient Search**: Universal search by `sk_patient_id` or `person_id`
 - **Comprehensive Demographics**: View detailed patient information including:
   - Core demographics (age, gender, ethnicity, life stage)
   - Registration history (practice, PCN, ICB)

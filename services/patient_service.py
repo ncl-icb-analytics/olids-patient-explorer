@@ -10,10 +10,10 @@ from database import get_connection
 
 def search_patient(search_term):
     """
-    Search for patient by person_id or sk_patient_id.
+    Search for patient by sk_patient_id or person_id.
 
     Args:
-        search_term: Either person_id or sk_patient_id
+        search_term: Either sk_patient_id (integer) or person_id (string)
 
     Returns:
         DataFrame with patient search results
@@ -21,7 +21,7 @@ def search_patient(search_term):
     conn = get_connection()
 
     try:
-        # Try to convert to integer for sk_patient_id search
+        # Try to convert to integer for sk_patient_id search (primary)
         search_int = int(search_term)
         query = f"""
         SELECT
@@ -37,10 +37,10 @@ def search_patient(search_term):
             pcn_name,
             ethnicity_subcategory
         FROM {TABLE_DIM_PERSON}
-        WHERE person_id = '{search_term}' OR sk_patient_id = {search_int}
+        WHERE sk_patient_id = {search_int} OR person_id = '{search_term}'
         """
     except ValueError:
-        # Not an integer, search only by person_id
+        # Not an integer, search by person_id (fallback)
         query = f"""
         SELECT
             person_id,
@@ -66,12 +66,12 @@ def search_patient(search_term):
         return pd.DataFrame()
 
 
-def get_patient_demographics(person_id):
+def get_patient_demographics(sk_patient_id):
     """
     Get full demographics for a patient.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
 
     Returns:
         DataFrame with full patient demographics
@@ -81,13 +81,13 @@ def get_patient_demographics(person_id):
     query = f"""
     SELECT *
     FROM {TABLE_DIM_PERSON}
-    WHERE person_id = '{person_id}'
+    WHERE sk_patient_id = {sk_patient_id}
     """
 
     try:
         result = conn.sql(query).to_pandas()
         if result.empty:
-            st.error(f"Patient {person_id} not found")
+            st.error(f"Patient {sk_patient_id} not found")
             return pd.DataFrame()
         return result
     except Exception as e:
@@ -95,17 +95,30 @@ def get_patient_demographics(person_id):
         return pd.DataFrame()
 
 
-def get_patient_registration_history(person_id):
+def get_patient_registration_history(sk_patient_id):
     """
     Get registration history for a patient from historical table.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
 
     Returns:
         DataFrame with registration history
     """
     conn = get_connection()
+
+    # First get person_id from sk_patient_id
+    person_lookup = conn.sql(f"""
+        SELECT person_id
+        FROM {TABLE_DIM_PERSON}
+        WHERE sk_patient_id = {sk_patient_id}
+        LIMIT 1
+    """).to_pandas()
+    
+    if person_lookup.empty:
+        return pd.DataFrame()
+    
+    person_id = person_lookup.iloc[0]['PERSON_ID']
 
     query = f"""
     SELECT
@@ -135,17 +148,30 @@ def get_patient_registration_history(person_id):
         st.warning(f"Could not load registration history: {str(e)}")
         return pd.DataFrame()
 
-def get_patient_ltc_summary(person_id):
+def get_patient_ltc_summary(sk_patient_id):
     """
     Get long-term conditions summary for a patient.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
 
     Returns:
         DataFrame with LTC conditions
     """
     conn = get_connection()
+
+    # First get person_id from sk_patient_id
+    person_lookup = conn.sql(f"""
+        SELECT person_id
+        FROM {TABLE_DIM_PERSON}
+        WHERE sk_patient_id = {sk_patient_id}
+        LIMIT 1
+    """).to_pandas()
+    
+    if person_lookup.empty:
+        return pd.DataFrame()
+    
+    person_id = person_lookup.iloc[0]['PERSON_ID']
 
     query = f"""
     SELECT

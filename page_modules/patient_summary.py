@@ -24,18 +24,19 @@ def render_patient_summary():
             st.rerun()
         return
 
-    person_id = st.session_state.selected_patient
+    sk_patient_id = st.session_state.selected_patient
 
     # Load patient data with spinner (before showing any UI)
     with st.spinner("Loading patient summary..."):
         # Load patient demographics
-        demographics = get_patient_demographics(person_id)
+        demographics = get_patient_demographics(sk_patient_id)
 
         if demographics.empty:
             st.error("Failed to load patient demographics")
             return
 
         patient = demographics.iloc[0]
+        person_id = patient['PERSON_ID']  # Get person_id for queries that need it
 
         # Get observation, medication, and appointment summaries
         obs_summary = get_observation_summary(person_id)
@@ -85,7 +86,7 @@ def render_patient_summary():
     with tab2:
         render_registration_info(patient)
         st.markdown("<br>", unsafe_allow_html=True)
-        render_registration_history(person_id)
+        render_registration_history(sk_patient_id)
 
     with tab3:
         render_geography_info(patient)
@@ -96,12 +97,12 @@ def render_patient_summary():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Long-term conditions summary
-    render_ltc_summary(person_id)
+    render_ltc_summary(sk_patient_id)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Problems section (lazy loaded)
-    render_problems_summary(person_id)
+    render_problems_summary(sk_patient_id)
 
 
 def render_patient_header(patient):
@@ -119,8 +120,8 @@ def render_patient_header(patient):
     )
     
     # Title with inline status badge
-    st.markdown(f"## Patient Record: {patient['PERSON_ID']} {badge_html}", unsafe_allow_html=True)
-    st.markdown(f"**SK Patient ID:** {patient['SK_PATIENT_ID']}")
+    st.markdown(f"## Patient Record: {patient['SK_PATIENT_ID']} {badge_html}", unsafe_allow_html=True)
+    st.markdown(f"**Person ID:** {patient['PERSON_ID']}")
 
 
 def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
@@ -282,14 +283,14 @@ def render_language_info(patient):
             st.markdown(f"Type: {safe_str(patient['INTERPRETER_TYPE'])}")
 
 
-def render_registration_history(person_id):
+def render_registration_history(sk_patient_id):
     """
     Render registration history as a markdown list.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
     """
-    history = get_patient_registration_history(person_id)
+    history = get_patient_registration_history(sk_patient_id)
 
     if history.empty:
         st.info("No registration history available")
@@ -368,14 +369,14 @@ def render_registration_history(person_id):
                 st.markdown("---")
 
 
-def render_ltc_summary(person_id):
+def render_ltc_summary(sk_patient_id):
     """
     Render long-term conditions summary section.
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
     """
-    ltc_data = get_patient_ltc_summary(person_id)
+    ltc_data = get_patient_ltc_summary(sk_patient_id)
 
     if ltc_data.empty:
         return
@@ -403,19 +404,26 @@ def render_ltc_summary(person_id):
         st.markdown("")
 
 
-def render_problems_summary(person_id):
+def render_problems_summary(sk_patient_id):
     """
     Render problems summary section (lazy loaded).
 
     Args:
-        person_id: Patient identifier
+        sk_patient_id: Patient identifier (sk_patient_id)
     """
     from services.record_service import get_patient_problems
+    from services.patient_service import get_patient_demographics
     from utils.helpers import format_practitioner_name, safe_str
     
     with st.expander("🏥 Problems (Active & Past)", expanded=False):
         with st.spinner("Loading problems..."):
-            problems = get_patient_problems(person_id)
+            # Get person_id from sk_patient_id for the query
+            demographics = get_patient_demographics(sk_patient_id)
+            if not demographics.empty:
+                person_id = demographics.iloc[0]['PERSON_ID']
+                problems = get_patient_problems(person_id)
+            else:
+                problems = pd.DataFrame()
 
         if problems.empty:
             st.info("No problems found")

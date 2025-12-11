@@ -21,14 +21,14 @@ def render_search():
 
     # Search container
     st.markdown('<div class="search-container">', unsafe_allow_html=True)
-    st.markdown("Search for a patient by entering their **person_id** or **sk_patient_id**")
+    st.markdown("Search for a patient by entering their **sk_patient_id** or **person_id**")
 
     # Use a form to enable ENTER key submission
     with st.form(key="search_form", clear_on_submit=False):
         # Search input
         search_term = st.text_input(
             "Patient Identifier",
-            placeholder="Enter person_id or sk_patient_id",
+            placeholder="Enter sk_patient_id or person_id",
             key="search_input",
             label_visibility="collapsed"
         )
@@ -69,7 +69,7 @@ def render_search():
         st.markdown("---")
         st.markdown("#### Instructions")
         st.markdown("""
-        - Enter a **person_id** or **sk_patient_id**
+        - Enter a **sk_patient_id** or **person_id**
         - Click **Search** to find the patient
         - Click **View Record** on a result to view the patient's complete record
         """)
@@ -87,8 +87,8 @@ def render_patient_card(patient_row):
         col1, col2 = st.columns([3, 1])
 
         with col1:
-            st.markdown(f"#### Patient: {patient_row['PERSON_ID']}")
-            st.markdown(f"**SK Patient ID:** {patient_row['SK_PATIENT_ID']}")
+            st.markdown(f"#### Patient: {patient_row['SK_PATIENT_ID']}")
+            st.markdown(f"**Person ID:** {patient_row['PERSON_ID']}")
 
         with col2:
             # Align badge to the right with proper vertical alignment
@@ -115,9 +115,9 @@ def render_patient_card(patient_row):
         with col3:
             # View record button - aligned with metrics
             st.markdown("<div style='padding-top: 18px;'>", unsafe_allow_html=True)
-            if st.button("View Record", key=f"view_{patient_row['PERSON_ID']}", type="primary", use_container_width=True):
+            if st.button("View Record", key=f"view_{patient_row['SK_PATIENT_ID']}", type="primary", use_container_width=True):
                 st.session_state.page = "patient_summary"
-                st.session_state.selected_patient = patient_row["PERSON_ID"]
+                st.session_state.selected_patient = patient_row["SK_PATIENT_ID"]
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 

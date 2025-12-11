@@ -160,7 +160,15 @@ def render_medications():
             st.rerun()
         return
 
-    person_id = st.session_state.selected_patient
+    sk_patient_id = st.session_state.selected_patient
+
+    # Get person_id from sk_patient_id for queries
+    from services.patient_service import get_patient_demographics
+    demographics = get_patient_demographics(sk_patient_id)
+    if demographics.empty:
+        st.error("Failed to load patient demographics")
+        return
+    person_id = demographics.iloc[0]['PERSON_ID']
 
     # Navigation buttons
     col1, col2, col3 = st.columns([1, 1, 4])
@@ -174,7 +182,7 @@ def render_medications():
             st.session_state.search_results = None
             st.rerun()
 
-    st.markdown(f"## 💊 Medications for Patient: {person_id}")
+    st.markdown(f"## 💊 Medications for Patient: {sk_patient_id}")
 
     # Search filter (applies to both Current and Past)
     search_term = st.text_input(
