@@ -446,7 +446,6 @@ def render_problems_summary(person_id):
             # Prepare display dataframe
             display_df = active_problems.copy()
             display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
-            display_df['EPISODICITY_DISPLAY'] = display_df['EPISODICITY'].apply(safe_str)
             display_df['PRACTITIONER'] = display_df.apply(
                 lambda row: format_practitioner_name(
                     row['PRACTITIONER_LAST_NAME'],
@@ -459,10 +458,9 @@ def render_problems_summary(person_id):
             display_df = display_df[[
                 'DATE_DISPLAY',
                 'MAPPED_CONCEPT_DISPLAY',
-                'EPISODICITY_DISPLAY',
                 'PRACTITIONER'
             ]]
-            display_df.columns = ['Date', 'Problem', 'Episodicity', 'Practitioner']
+            display_df.columns = ['Date', 'Problem', 'Practitioner']
             
             st.dataframe(
                 display_df,
@@ -483,7 +481,6 @@ def render_problems_summary(person_id):
             # Prepare display dataframe
             display_df = past_problems.copy()
             display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
-            display_df['EPISODICITY_DISPLAY'] = display_df['EPISODICITY'].apply(safe_str)
             display_df['PRACTITIONER'] = display_df.apply(
                 lambda row: format_practitioner_name(
                     row['PRACTITIONER_LAST_NAME'],
@@ -496,10 +493,9 @@ def render_problems_summary(person_id):
             display_df = display_df[[
                 'DATE_DISPLAY',
                 'MAPPED_CONCEPT_DISPLAY',
-                'EPISODICITY_DISPLAY',
                 'PRACTITIONER'
             ]]
-            display_df.columns = ['Date', 'Problem', 'Episodicity', 'Practitioner']
+            display_df.columns = ['Date', 'Problem', 'Practitioner']
             
             st.dataframe(
                 display_df,
