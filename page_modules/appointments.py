@@ -36,7 +36,7 @@ def render_appointments():
             st.session_state.search_results = None
             st.rerun()
 
-    st.markdown(f"## 📅 Appointments for Patient: {person_id}")
+    st.markdown(f"## Appointments for Patient: {person_id}")
 
     # Load all appointments (future appointments always shown, no date filter)
     with st.spinner("Loading appointments..."):
@@ -121,6 +121,7 @@ def render_appointments():
                 tooltip=["YEAR_MONTH:N", "STATUS_DISPLAY:N", "COUNT:Q"]
             ).properties(
                 title="Appointments Over Time by Status",
+                width="container",
                 height=400
             ).configure_legend(
                 padding=15,
@@ -138,6 +139,7 @@ def render_appointments():
                 tooltip=["YEAR_MONTH:N", "SLOT_CATEGORY:N", "COUNT:Q"]
             ).properties(
                 title="Appointments Over Time by Slot Category",
+                width="container",
                 height=400
             ).configure_legend(
                 padding=15,
