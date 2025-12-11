@@ -4,7 +4,7 @@ Patient search page
 
 import streamlit as st
 from services.patient_service import search_patient
-from utils.helpers import render_status_badge, safe_str, format_month_year
+from utils.helpers import render_status_badge, get_status_badge_html, safe_str, format_month_year
 
 
 def render_search():
@@ -87,18 +87,17 @@ def render_patient_card(patient_row):
         col1, col2 = st.columns([3, 1])
 
         with col1:
-            st.markdown(f"#### Patient: {patient_row['SK_PATIENT_ID']}")
-            st.markdown(f"**Person ID:** {patient_row['PERSON_ID']}")
-
-        with col2:
-            # Align badge to the right with proper vertical alignment
-            st.markdown("<div style='text-align: right; padding-top: 4px;'>", unsafe_allow_html=True)
-            render_status_badge(
+            badge_html = get_status_badge_html(
                 patient_row["IS_ACTIVE"],
                 patient_row["IS_DECEASED"],
                 patient_row.get("INACTIVE_REASON")
             )
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown(f"#### Patient: {patient_row['SK_PATIENT_ID']} {badge_html}", unsafe_allow_html=True)
+            st.markdown(f"**Person ID:** {patient_row['PERSON_ID']}")
+
+        with col2:
+            # Empty column for spacing
+            st.markdown("")
 
         # Demographics summary and button
         col1, col2, col3 = st.columns([1, 1, 2])

@@ -63,6 +63,7 @@ CUSTOM_CSS = """
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        vertical-align: middle;
     }
 
     .status-inactive {
@@ -75,6 +76,7 @@ CUSTOM_CSS = """
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        vertical-align: middle;
     }
 
     .status-deceased {
@@ -87,6 +89,7 @@ CUSTOM_CSS = """
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        vertical-align: middle;
     }
 
     /* Demographics grid */
