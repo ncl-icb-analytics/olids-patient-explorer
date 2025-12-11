@@ -95,6 +95,8 @@ def get_patient_observations(person_id, date_from=None, date_to=None, search_ter
         o.result_value,
         o.result_text,
         o.result_unit_display,
+        o.is_problem,
+        COALESCE(episodicity_concept.display, o.episodicity_concept_id) as episodicity_display,
         p.last_name as practitioner_last_name,
         p.first_name as practitioner_first_name,
         p.title as practitioner_title,
@@ -102,6 +104,11 @@ def get_patient_observations(person_id, date_from=None, date_to=None, search_ter
     FROM {TABLE_OBSERVATION} o
     LEFT JOIN {TABLE_PRACTITIONER} p
         ON o.practitioner_id = p.id
+    LEFT JOIN {TABLE_CONCEPT_MAP} episodicity_map
+        ON o.episodicity_concept_id = episodicity_map.source_code_id
+        AND episodicity_map.is_primary = TRUE
+    LEFT JOIN {TABLE_CONCEPT} episodicity_concept
+        ON episodicity_map.target_code_id = episodicity_concept.id
     WHERE {where_sql}
     ORDER BY o.clinical_effective_date DESC
     LIMIT {MAX_OBSERVATIONS}

@@ -5,7 +5,7 @@ Observations view page
 import streamlit as st
 import pandas as pd
 from services.record_service import get_patient_observations, calculate_date_range
-from utils.helpers import format_date, format_value_with_unit, format_practitioner_name
+from utils.helpers import format_date, format_value_with_unit, format_practitioner_name, safe_str
 from config import DATE_RANGE_OPTIONS
 
 
@@ -90,15 +90,27 @@ def render_observations():
             axis=1
         )
 
+        # Format is_problem as Yes/No
+        display_df['IS_PROBLEM_DISPLAY'] = display_df['IS_PROBLEM'].apply(
+            lambda x: "Yes" if x == True else "No"
+        )
+        
+        # Format episodicity display
+        display_df['EPISODICITY_DISPLAY'] = display_df['EPISODICITY_DISPLAY'].apply(
+            lambda x: safe_str(x) if pd.notna(x) and x != "N/A" else ""
+        )
+        
         # Select and rename columns for display
         display_df = display_df[[
             'CLINICAL_EFFECTIVE_DATE',
             'MAPPED_CONCEPT_CODE',
             'MAPPED_CONCEPT_DISPLAY',
             'VALUE',
+            'IS_PROBLEM_DISPLAY',
+            'EPISODICITY_DISPLAY',
             'PRACTITIONER'
         ]]
-        display_df.columns = ['Date', 'Code', 'Observation', 'Value', 'Practitioner']
+        display_df.columns = ['Date', 'Code', 'Observation', 'Value', 'Is Problem', 'Episodicity', 'Practitioner']
 
         # Display table
         st.dataframe(
