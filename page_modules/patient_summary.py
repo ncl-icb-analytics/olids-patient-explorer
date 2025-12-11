@@ -292,7 +292,7 @@ def render_registration_history(person_id):
 
     total_periods = len(history)
     
-    # Prepare data for timeline chart - sort by start date
+    # Prepare data for timeline chart
     chart_data = []
     for idx, row in history.iterrows():
         start_date = pd.to_datetime(row['EFFECTIVE_START_DATE'])
@@ -306,23 +306,26 @@ def render_registration_history(person_id):
             'is_current': 'Current' if row['IS_CURRENT'] else 'Past',
             'is_active': row['IS_ACTIVE'],
             'practice_code': safe_str(row['PRACTICE_CODE']),
-            'pcn': safe_str(row['PCN_NAME'])
+            'pcn': safe_str(row['PCN_NAME']),
+            'period_seq': row['PERIOD_SEQUENCE']
         })
     
     chart_df = pd.DataFrame(chart_data)
-    chart_df = chart_df.sort_values('start_date', ascending=False)
+    # Sort by period sequence descending (most recent first)
+    chart_df = chart_df.sort_values('period_seq', ascending=False)
     chart_df['row_num'] = range(len(chart_df))
     
     # Create timeline chart
     st.markdown("### Registration Timeline")
     
-    # Create timeline with bars - use practice as y-axis to handle overlaps naturally
+    # Create timeline with bars - each period gets its own row, sorted by period sequence
     bars = alt.Chart(chart_df).mark_bar(
-        opacity=0.7
+        opacity=0.8,
+        strokeWidth=1
     ).encode(
         x=alt.X('start_date:T', title='Date'),
         x2='end_date:T',
-        y=alt.Y('row_num:O', title='Period', axis=alt.Axis(labels=False, ticks=False)),
+        y=alt.Y('period:N', title='', sort=alt.SortField(field='period_seq', order='descending')),
         color=alt.Color(
             'is_current:N',
             scale=alt.Scale(
@@ -340,20 +343,8 @@ def render_registration_history(person_id):
             alt.Tooltip('end_date:T', title='End', format='%d %b %Y')
         ]
     ).properties(
-        height=max(300, len(chart_df) * 50),
+        height=max(300, len(chart_df) * 60),
         width="container"
-    )
-    
-    # Add period labels on the left
-    period_labels = alt.Chart(chart_df).mark_text(
-        align='right',
-        baseline='middle',
-        dx=-5
-    ).encode(
-        x=alt.X('start_date:T', aggregate='min', title=''),
-        y=alt.Y('row_num:O', sort=None),
-        text=alt.Text('period:N'),
-        color=alt.value('black')
     )
     
     # Add practice labels on the bars
@@ -364,12 +355,15 @@ def render_registration_history(person_id):
         fontSize=10
     ).encode(
         x='start_date:T',
-        y=alt.Y('row_num:O', sort=None),
-        text=alt.Text('practice:N'),
-        color=alt.value('black')
+        y=alt.Y('period:N', sort=alt.SortField(field='period_seq', order='descending')),
+        text=alt.Text('practice:N')
     )
     
-    timeline_chart = (bars + period_labels + practice_labels).configure_view(strokeWidth=0)
+    timeline_chart = (bars + practice_labels).configure_view(
+        strokeWidth=0
+    ).configure_axis(
+        grid=False
+    )
     
     st.altair_chart(timeline_chart, use_container_width=True)
     
