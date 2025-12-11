@@ -38,20 +38,9 @@ def render_appointments():
 
     st.markdown(f"## 📅 Appointments for Patient: {person_id}")
 
-    # Filters
-    st.markdown("### Filters")
-    date_range = st.selectbox(
-        "Date Range",
-        options=list(DATE_RANGE_OPTIONS.keys()),
-        index=0
-    )
-
-    # Calculate date range
-    date_from, date_to = calculate_date_range(date_range)
-
-    # Load appointments
+    # Load all appointments (future appointments always shown, no date filter)
     with st.spinner("Loading appointments..."):
-        appointments = get_patient_appointments(person_id, date_from, date_to, include_future=True)
+        appointments = get_patient_appointments(person_id, date_from=None, date_to=None, include_future=True)
 
     if appointments.empty:
         st.info("No appointments found")
@@ -72,7 +61,7 @@ def render_appointments():
             st.markdown(f"**{len(future_df)} upcoming appointment(s)**")
             render_appointment_table(future_df, show_charts=False)
         else:
-            st.info("No future appointments booked")
+            st.markdown("No future appointments booked")
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("---")
@@ -81,10 +70,32 @@ def render_appointments():
         # Past appointments section
         if not past_df.empty:
             st.markdown("### 📊 Past Appointments")
+            
+            # Date range filter for past appointments
+            date_range = st.selectbox(
+                "Date Range",
+                options=list(DATE_RANGE_OPTIONS.keys()),
+                index=0,
+                key="past_appointments_date_range"
+            )
+            
+            # Calculate date range
+            date_from, date_to = calculate_date_range(date_range)
+            
+            # Filter past appointments by date range
+            if date_from:
+                past_df = past_df[past_df["START_DATE"] >= pd.to_datetime(date_from)]
+            if date_to:
+                past_df = past_df[past_df["START_DATE"] <= pd.to_datetime(date_to)]
+            
+            if past_df.empty:
+                st.info("No past appointments found for the selected time period")
+                return
+            
             st.markdown(f"**Showing {len(past_df):,} past appointment(s)** (limited to 10,000 most recent)")
             
-            # Create year-month for grouping
-            past_df["YEAR_MONTH"] = past_df["START_DATE"].dt.to_period("M").astype(str)
+            # Create year-month for grouping (format: yyyy-mmm)
+            past_df["YEAR_MONTH"] = past_df["START_DATE"].dt.strftime("%Y-%b")
             
             # Clean up status names
             past_df["STATUS_DISPLAY"] = past_df["APPOINTMENT_STATUS"].apply(
@@ -106,11 +117,14 @@ def render_appointments():
             status_chart = alt.Chart(status_counts).mark_bar().encode(
                 x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
-                color=alt.Color("STATUS_DISPLAY:N", title="Status"),
+                color=alt.Color("STATUS_DISPLAY:N", title="Status", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
                 tooltip=["YEAR_MONTH:N", "STATUS_DISPLAY:N", "COUNT:Q"]
             ).properties(
                 title="Appointments Over Time by Status",
                 height=400
+            ).configure_legend(
+                padding=15,
+                labelLimit=250
             )
             st.altair_chart(status_chart, use_container_width=True)
             
@@ -120,18 +134,21 @@ def render_appointments():
             slot_chart = alt.Chart(slot_counts).mark_bar().encode(
                 x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
-                color=alt.Color("SLOT_CATEGORY:N", title="Slot Category"),
+                color=alt.Color("SLOT_CATEGORY:N", title="Slot Category", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
                 tooltip=["YEAR_MONTH:N", "SLOT_CATEGORY:N", "COUNT:Q"]
             ).properties(
                 title="Appointments Over Time by Slot Category",
                 height=400
+            ).configure_legend(
+                padding=15,
+                labelLimit=250
             )
             st.altair_chart(slot_chart, use_container_width=True)
             
             st.markdown("#### Details")
             render_appointment_table(past_df, show_charts=False)
         else:
-            st.info("No past appointments found for the selected time period")
+            st.info("No past appointments found")
 
 
 def render_appointment_table(df, show_charts=True):
