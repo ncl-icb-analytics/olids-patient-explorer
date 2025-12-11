@@ -432,7 +432,7 @@ def get_patient_problems(person_id):
         o.mapped_concept_code,
         o.mapped_concept_display,
         o.is_problem,
-        o.is_problem_deleted,
+        o.problem_end_date,
         COALESCE(episodicity_concept.display, o.episodicity_concept_id) as episodicity,
         p.last_name as practitioner_last_name,
         p.first_name as practitioner_first_name,
@@ -448,6 +448,7 @@ def get_patient_problems(person_id):
         ON episodicity_map.target_code_id = episodicity_concept.id
     WHERE o.person_id = '{person_id}'
         AND o.is_problem = TRUE
+        AND (o.is_problem_deleted IS NULL OR o.is_problem_deleted = FALSE)
     ORDER BY o.clinical_effective_date DESC
     LIMIT {MAX_OBSERVATIONS}
     """

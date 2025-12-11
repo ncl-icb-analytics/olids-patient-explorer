@@ -421,14 +421,19 @@ def render_problems_summary(person_id):
             st.info("No problems found")
             return
 
-        # Split into active and past problems
+        # Split into active and past problems based on problem_end_date
+        # Current: problem_end_date is NULL or in the future
+        # Past: problem_end_date is set and in the past
+        now = datetime.now()
+        
         active_problems = problems[
-            (problems['IS_PROBLEM'] == True) & 
-            (problems['IS_PROBLEM_DELETED'] != True)
+            (problems['PROBLEM_END_DATE'].isna()) | 
+            (pd.to_datetime(problems['PROBLEM_END_DATE']) > now)
         ].copy()
         
         past_problems = problems[
-            (problems['IS_PROBLEM_DELETED'] == True)
+            (problems['PROBLEM_END_DATE'].notna()) & 
+            (pd.to_datetime(problems['PROBLEM_END_DATE']) <= now)
         ].copy()
 
         # Active Problems Section
