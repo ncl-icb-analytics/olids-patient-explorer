@@ -136,9 +136,9 @@ def render_summary_metrics(obs_summary, med_summary, appt_summary, patient):
         st.metric("Observations", f"{obs_summary['total_observations']:,}")
 
     with col2:
-        active_count = med_summary['active_medications']
+        current_count = med_summary['current_medications']
         total_count = med_summary['total_medications']
-        st.metric("Medications (Active)", f"{active_count:,}")
+        st.metric("Medications (Current)", f"{current_count:,}")
         st.caption(f"Total: {total_count:,}")
 
     with col3:

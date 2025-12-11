@@ -139,7 +139,7 @@ def get_medication_summary(person_id):
             WHEN m.duration_days IS NOT NULL
                 AND DATEADD(day, m.duration_days, m.clinical_effective_date) > CURRENT_DATE()
             THEN 1
-        END) as active_medications
+        END) as current_medications
     FROM {TABLE_MEDICATION_ORDER} m
     LEFT JOIN {TABLE_MEDICATION_STATEMENT} ms
         ON m.medication_statement_id = ms.id
@@ -151,7 +151,7 @@ def get_medication_summary(person_id):
         if result.empty:
             return {
                 "total_medications": 0,
-                "active_medications": 0,
+                "current_medications": 0,
                 "earliest_date": None,
                 "most_recent_date": None
             }
@@ -159,7 +159,7 @@ def get_medication_summary(person_id):
         row = result.iloc[0]
         return {
             "total_medications": int(row["TOTAL_MEDICATIONS"]),
-            "active_medications": int(row["ACTIVE_MEDICATIONS"]),
+            "current_medications": int(row["CURRENT_MEDICATIONS"]),
             "earliest_date": row["EARLIEST_DATE"],
             "most_recent_date": row["MOST_RECENT_DATE"]
         }
@@ -167,13 +167,13 @@ def get_medication_summary(person_id):
         st.error(f"Error loading medication summary: {str(e)}")
         return {
             "total_medications": 0,
-            "active_medications": 0,
+            "current_medications": 0,
             "earliest_date": None,
             "most_recent_date": None
         }
 
 
-def get_patient_medications(person_id, date_from=None, date_to=None, search_term=""):
+def get_patient_medications(person_id, date_from=None, date_to=None, search_term="", current_only=False):
     """
     Get medications for a patient with optional filters.
 
@@ -182,6 +182,7 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
         date_from: Start date filter (optional)
         date_to: End date filter (optional)
         search_term: Search term for code or description (optional)
+        current_only: If True, only return current/active medications (default False)
 
     Returns:
         DataFrame with medications
@@ -204,6 +205,18 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
             f"OR m.mapped_concept_display ILIKE '{search_pattern}')"
         )
 
+    # Filter for current medications only
+    if current_only:
+        where_clauses.append("""
+            (ms.cancellation_date IS NULL OR ms.cancellation_date > CURRENT_DATE())
+            AND (ms.expiry_date IS NULL OR ms.expiry_date >= CURRENT_DATE())
+            AND (ms.is_active IS NULL OR ms.is_active = TRUE)
+            AND (
+                m.duration_days IS NULL 
+                OR DATEADD(day, m.duration_days, m.clinical_effective_date) >= CURRENT_DATE()
+            )
+        """)
+
     where_sql = " AND ".join(where_clauses)
 
     query = f"""
@@ -216,9 +229,9 @@ def get_patient_medications(person_id, date_from=None, date_to=None, search_term
         m.quantity_unit,
         m.duration_days,
         m.estimated_cost,
-        m.issue_method,
+        m.issue_method_description,
         ms.bnf_reference,
-        ms.issue_method as statement_issue_method,
+        ms.authorisation_type_display,
         ms.is_active as statement_is_active,
         ms.cancellation_date,
         ms.expiry_date,

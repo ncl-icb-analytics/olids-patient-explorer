@@ -42,6 +42,13 @@ DATE_RANGE_OPTIONS = {
     "All time": None
 }
 
+# Date range options for past medications
+PAST_MEDICATIONS_DATE_RANGE_OPTIONS = {
+    "90 days": 90,
+    "1 year": 365,
+    "All": None
+}
+
 # Custom CSS for styling
 CUSTOM_CSS = """
 <style>
