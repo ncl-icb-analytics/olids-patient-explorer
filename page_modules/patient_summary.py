@@ -98,6 +98,11 @@ def render_patient_summary():
     # Long-term conditions summary
     render_ltc_summary(person_id)
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Problems section (lazy loaded)
+    render_problems_summary(person_id)
+
 
 def render_patient_header(patient):
     """
@@ -396,3 +401,104 @@ def render_ltc_summary(person_id):
 
         st.markdown(badges_html, unsafe_allow_html=True)
         st.markdown("")
+
+
+def render_problems_summary(person_id):
+    """
+    Render problems summary section (lazy loaded).
+
+    Args:
+        person_id: Patient identifier
+    """
+    from services.record_service import get_patient_problems
+    from utils.helpers import format_practitioner_name, safe_str
+    
+    with st.expander("🏥 Problems (Active & Past)", expanded=False):
+        with st.spinner("Loading problems..."):
+            problems = get_patient_problems(person_id)
+
+        if problems.empty:
+            st.info("No problems found")
+            return
+
+        # Split into active and past problems
+        active_problems = problems[
+            (problems['IS_PROBLEM'] == True) & 
+            (problems['IS_PROBLEM_DELETED'] != True)
+        ].copy()
+        
+        past_problems = problems[
+            (problems['IS_PROBLEM_DELETED'] == True)
+        ].copy()
+
+        # Active Problems Section
+        st.markdown("### Current Problems")
+        if active_problems.empty:
+            st.markdown("No current problems")
+        else:
+            st.markdown(f"**Showing {len(active_problems):,} current problem(s)**")
+            
+            # Prepare display dataframe
+            display_df = active_problems.copy()
+            display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
+            display_df['EPISODICITY_DISPLAY'] = display_df['EPISODICITY'].apply(safe_str)
+            display_df['PRACTITIONER'] = display_df.apply(
+                lambda row: format_practitioner_name(
+                    row['PRACTITIONER_LAST_NAME'],
+                    row['PRACTITIONER_FIRST_NAME'],
+                    row['PRACTITIONER_TITLE']
+                ),
+                axis=1
+            )
+            
+            display_df = display_df[[
+                'DATE_DISPLAY',
+                'MAPPED_CONCEPT_DISPLAY',
+                'EPISODICITY_DISPLAY',
+                'PRACTITIONER'
+            ]]
+            display_df.columns = ['Date', 'Problem', 'Episodicity', 'Practitioner']
+            
+            st.dataframe(
+                display_df,
+                use_container_width=True,
+                hide_index=True,
+                height=300
+            )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Past Problems Section
+        st.markdown("### Past Problems")
+        if past_problems.empty:
+            st.markdown("No past problems")
+        else:
+            st.markdown(f"**Showing {len(past_problems):,} past problem(s)**")
+            
+            # Prepare display dataframe
+            display_df = past_problems.copy()
+            display_df['DATE_DISPLAY'] = display_df['CLINICAL_EFFECTIVE_DATE'].apply(format_date)
+            display_df['EPISODICITY_DISPLAY'] = display_df['EPISODICITY'].apply(safe_str)
+            display_df['PRACTITIONER'] = display_df.apply(
+                lambda row: format_practitioner_name(
+                    row['PRACTITIONER_LAST_NAME'],
+                    row['PRACTITIONER_FIRST_NAME'],
+                    row['PRACTITIONER_TITLE']
+                ),
+                axis=1
+            )
+            
+            display_df = display_df[[
+                'DATE_DISPLAY',
+                'MAPPED_CONCEPT_DISPLAY',
+                'EPISODICITY_DISPLAY',
+                'PRACTITIONER'
+            ]]
+            display_df.columns = ['Date', 'Problem', 'Episodicity', 'Practitioner']
+            
+            st.dataframe(
+                display_df,
+                use_container_width=True,
+                hide_index=True,
+                height=300
+            )

@@ -5,7 +5,7 @@ Patient records service for observations and medications
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
-from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, TABLE_MEDICATION_STATEMENT, TABLE_PRACTITIONER, MAX_OBSERVATIONS
+from config import TABLE_OBSERVATION, TABLE_MEDICATION_ORDER, TABLE_MEDICATION_STATEMENT, TABLE_PRACTITIONER, TABLE_CONCEPT, TABLE_CONCEPT_MAP, MAX_OBSERVATIONS
 from database import get_connection
 
 
