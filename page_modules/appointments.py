@@ -110,12 +110,16 @@ def render_appointments():
             # Visualization Section
             st.markdown("#### Trends")
             
+            # Create a sortable date column for proper chronological ordering
+            past_df["SORT_DATE"] = past_df["START_DATE"].dt.to_period("M").dt.to_timestamp()
+            
             # Group by month and status
-            status_counts = past_df.groupby(["YEAR_MONTH", "STATUS_DISPLAY"]).size().reset_index(name="COUNT")
+            status_counts = past_df.groupby(["YEAR_MONTH", "STATUS_DISPLAY", "SORT_DATE"]).size().reset_index(name="COUNT")
+            status_counts = status_counts.sort_values("SORT_DATE")
             
             # Create timeline chart colored by status using Altair
             status_chart = alt.Chart(status_counts).mark_bar().encode(
-                x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
+                x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45), sort=alt.SortField(field="SORT_DATE", order="ascending")),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
                 color=alt.Color("STATUS_DISPLAY:N", title="Status", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
                 tooltip=["YEAR_MONTH:N", "STATUS_DISPLAY:N", "COUNT:Q"]
@@ -130,10 +134,11 @@ def render_appointments():
             st.altair_chart(status_chart, use_container_width=True)
             
             # Second chart: by slot category
-            slot_counts = past_df.groupby(["YEAR_MONTH", "SLOT_CATEGORY"]).size().reset_index(name="COUNT")
+            slot_counts = past_df.groupby(["YEAR_MONTH", "SLOT_CATEGORY", "SORT_DATE"]).size().reset_index(name="COUNT")
+            slot_counts = slot_counts.sort_values("SORT_DATE")
             
             slot_chart = alt.Chart(slot_counts).mark_bar().encode(
-                x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45)),
+                x=alt.X("YEAR_MONTH:N", title="Month", axis=alt.Axis(labelAngle=-45), sort=alt.SortField(field="SORT_DATE", order="ascending")),
                 y=alt.Y("COUNT:Q", title="Number of Appointments"),
                 color=alt.Color("SLOT_CATEGORY:N", title="Slot Category", legend=alt.Legend(columns=1, symbolLimit=0, labelLimit=250)),
                 tooltip=["YEAR_MONTH:N", "SLOT_CATEGORY:N", "COUNT:Q"]
