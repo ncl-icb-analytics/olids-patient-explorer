@@ -3,6 +3,9 @@ Patient summary page - landing page when viewing a patient record
 """
 
 import streamlit as st
+import pandas as pd
+import altair as alt
+from datetime import datetime
 from services.patient_service import get_patient_demographics, get_patient_registration_history, get_patient_ltc_summary
 from services.record_service import get_observation_summary, get_medication_summary, get_appointment_summary
 from utils.helpers import render_status_badge, get_status_badge_html, format_date, format_boolean, safe_str, format_month_year
@@ -276,7 +279,7 @@ def render_language_info(patient):
 
 def render_registration_history(person_id):
     """
-    Render registration history summary and details.
+    Render registration history as a timeline chart and details.
 
     Args:
         person_id: Patient identifier
@@ -287,33 +290,88 @@ def render_registration_history(person_id):
         st.info("No registration history available")
         return
 
-    # Summary section - show key stats
-    st.markdown("### Registration History Summary")
-    
     total_periods = len(history)
-    current_period = history[history['IS_CURRENT'] == True]
-    has_current = not current_period.empty
     
-    if has_current:
-        current_row = current_period.iloc[0]
-        reg_start = format_date(current_row['REGISTRATION_START_DATE'])
-        effective_start = format_date(current_row['EFFECTIVE_START_DATE'])
-    else:
-        reg_start = "N/A"
-        effective_start = "N/A"
+    # Prepare data for timeline chart
+    chart_data = []
+    for idx, row in history.iterrows():
+        start_date = pd.to_datetime(row['EFFECTIVE_START_DATE'])
+        end_date = pd.to_datetime(row['EFFECTIVE_END_DATE']) if pd.notna(row['EFFECTIVE_END_DATE']) else datetime.now()
+        
+        # Use practice name or code for display
+        practice_label = safe_str(row['PRACTICE_NAME'])
+        if len(practice_label) > 30:
+            practice_label = practice_label[:27] + "..."
+        
+        chart_data.append({
+            'period': f"Period {row['PERIOD_SEQUENCE']}",
+            'practice': practice_label,
+            'start_date': start_date,
+            'end_date': end_date,
+            'is_current': row['IS_CURRENT'],
+            'is_active': row['IS_ACTIVE'],
+            'practice_code': safe_str(row['PRACTICE_CODE'])
+        })
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Periods", total_periods)
-    with col2:
-        st.metric("Registration Start", reg_start)
-    with col3:
-        st.metric("Current Period Start", effective_start)
+    chart_df = pd.DataFrame(chart_data)
     
+    # Create timeline chart
+    st.markdown("### Registration Timeline")
+    
+    # Create a gantt-style timeline chart
+    chart_df['duration_days'] = (chart_df['end_date'] - chart_df['start_date']).dt.days
+    chart_df['y_position'] = range(len(chart_df))
+    
+    # Base chart for bars
+    bars = alt.Chart(chart_df).mark_bar(
+        cornerRadiusTop=3,
+        cornerRadiusBottom=3
+    ).encode(
+        x=alt.X('start_date:T', title='Date', axis=alt.Axis(format='%Y-%m')),
+        x2='end_date:T',
+        y=alt.Y('y_position:O', title=None, axis=None, sort=None),
+        color=alt.Color(
+            'is_current:N',
+            scale=alt.Scale(
+                domain=['True', 'False'],
+                range=['#28a745', '#6c757d']
+            ),
+            legend=alt.Legend(title="Status", values=['True', 'False'], labelExpr="datum.value == 'True' ? 'Current' : 'Past'")
+        ),
+        tooltip=[
+            alt.Tooltip('period:N', title='Period'),
+            alt.Tooltip('practice:N', title='Practice'),
+            alt.Tooltip('practice_code:N', title='Code'),
+            alt.Tooltip('start_date:T', title='Start', format='%d %b %Y'),
+            alt.Tooltip('end_date:T', title='End', format='%d %b %Y')
+        ]
+    ).properties(
+        height=max(200, len(chart_df) * 40),
+        width="container"
+    )
+    
+    # Add labels
+    labels = alt.Chart(chart_df).mark_text(
+        align='left',
+        baseline='middle',
+        dx=5,
+        fontSize=11
+    ).encode(
+        x='start_date:T',
+        y=alt.Y('y_position:O', sort=None),
+        text=alt.Text('practice:N'),
+        color=alt.value('#212529')
+    )
+    
+    timeline_chart = (bars + labels).configure_view(strokeWidth=0)
+    
+    st.altair_chart(timeline_chart, use_container_width=True)
+    
+    st.markdown(f"<small>Showing {total_periods} registration period(s)</small>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Detailed history in expandable section
-    with st.expander(f"📜 View All {total_periods} Registration Periods", expanded=False):
+    with st.expander(f"📜 View Detailed Registration History", expanded=False):
         for idx, row in history.iterrows():
             current_badge = " 🟢 **CURRENT**" if row['IS_CURRENT'] else ""
             active_status = "Active" if row['IS_ACTIVE'] else "Inactive"
